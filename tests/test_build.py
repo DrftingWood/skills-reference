@@ -157,18 +157,42 @@ class TestBuildAndVerify(unittest.TestCase):
     def test_build_writes_all_pages(self):
         with tempfile.TemporaryDirectory() as d:
             root = self._root(d)
-            build.build_site(root)
+            written, skills = build.build_site(root)
             for name in ["index", "personal", "superpowers", "builtin", "mcp",
                          "decision-guide", "cheatsheet", "combos", "overlap"]:
                 self.assertTrue((root / "site" / f"{name}.html").exists(), name)
             self.assertTrue((root / "site" / "assets" / "style.css").exists())
 
+    def test_build_returns_skills_list(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = self._root(d)
+            written, skills = build.build_site(root)
+            self.assertIsInstance(skills, list)
+            self.assertEqual(len(skills), 1)
+            self.assertEqual(skills[0]["name"], "alpha")
+
     def test_verify_clean_on_good_data(self):
         with tempfile.TemporaryDirectory() as d:
             root = self._root(d)
-            skills = build.load_skills(root / "data" / "skills.json")
-            build.build_site(root)
+            written, skills = build.build_site(root)
             self.assertEqual(build.verify_site(root, skills), [])
+
+    def test_build_idempotent_wipes_stale_files(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = self._root(d)
+            # First build
+            build.build_site(root)
+            # Drop a stale file into site/
+            stale = root / "site" / "STALE.html"
+            stale.write_text("<html>stale</html>", encoding="utf-8")
+            self.assertTrue(stale.exists(), "stale file should exist before second build")
+            # Second build must wipe the stale file
+            build.build_site(root)
+            self.assertFalse(stale.exists(), "stale file should be removed by second build")
+            # All 9 real pages must still exist
+            for name in ["index", "personal", "superpowers", "builtin", "mcp",
+                         "decision-guide", "cheatsheet", "combos", "overlap"]:
+                self.assertTrue((root / "site" / f"{name}.html").exists(), name)
 
 
 if __name__ == "__main__":

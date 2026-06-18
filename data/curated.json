@@ -5,7 +5,8 @@
     "graphify → deep-research → avoid-ai-writing",
     "grill-me → brainstorming → writing-plans → test-driven-development",
     "skill-creator → skill-check → writing-skills",
-    "frontend-design → webapp-testing → verify → Vercel"
+    "frontend-design → webapp-testing → verify",
+    "verify → Vercel"
   ],
   "decision_groups": [
     {

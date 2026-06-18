@@ -2,6 +2,7 @@
 import html
 import json
 import pathlib
+import re
 import shutil
 
 import templates
@@ -170,9 +171,6 @@ def render_overlap(skills):
     return templates.page_shell("Overlap Map", body, render_nav("overlap.html"))
 
 
-PAGES_REQUIRING_CATEGORY = {c: f"{c}.html" for c in CATEGORIES}
-
-
 def render_decision_guide(skills, curated):
     by_name = {s["name"]: s for s in skills}
     blocks = []
@@ -196,6 +194,9 @@ def build_site(root):
     validate(skills)
     curated = load_curated(root / "data" / "curated.json")
     out = root / "site"
+    # Wipe stale output so reruns are idempotent — site/ is fully generated + gitignored
+    if out.exists():
+        shutil.rmtree(out)
     (out / "assets").mkdir(parents=True, exist_ok=True)
     pages = {
         "index.html": render_index(skills),
@@ -211,7 +212,7 @@ def build_site(root):
         (out / name).write_text(content, encoding="utf-8")
         written.append(str(out / name))
     shutil.copyfile(root / "assets" / "style.css", out / "assets" / "style.css")
-    return written
+    return written, skills
 
 
 def verify_site(root, skills):
@@ -226,7 +227,6 @@ def verify_site(root, skills):
         if f'id="{slugify(s["name"])}"' not in page.read_text(encoding="utf-8"):
             problems.append(f"{s['name']}: anchor missing from {page.name}")
     index = (out / "index.html").read_text(encoding="utf-8")
-    import re
     for href in re.findall(r'href="([^"]+\.html(?:#[^"]+)?)"', index):
         file_part, _, anchor = href.partition("#")
         target = out / file_part
@@ -239,8 +239,7 @@ def verify_site(root, skills):
 
 def main():
     root = pathlib.Path(__file__).resolve().parent
-    skills = load_skills(root / "data" / "skills.json")
-    written = build_site(root)
+    written, skills = build_site(root)
     problems = verify_site(root, skills)
     print(f"Wrote {len(written)} pages to {root / 'site'}")
     if problems:

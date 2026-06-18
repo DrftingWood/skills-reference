@@ -1104,7 +1104,7 @@
       "design a landing page, dashboard, or web interface",
       "make this look polished and not like generic AI output"
     ],
-    "deep_dive": "The skill guides Claude to produce creative, production-grade frontend code by enforcing a design-first mindset before touching implementation. It starts by identifying the visual language (typography pairing, color palette, spacing system, motion principles) before writing any component code. Output targets real deployed web apps rather than claude.ai artifacts. The skill explicitly prohibits default aesthetic patterns associated with AI-generated UIs: purple/blue gradients, rounded-everything cards, Inter font with gray text, centered hero sections with vague taglines, and glass-morphism overlays. Instead it pushes toward strong typographic hierarchy, intentional whitespace, brand-specific color, and component-level animation. Works with any stack (React, Vue, plain HTML+CSS) and adapts design direction to project context — startup landing page vs. data dashboard vs. documentation site each get different visual treatment.",
+    "deep_dive": "frontend-design is a harness-bundled skill with no on-disk SKILL.md file; it injects design guidance directly into the build process for web components, pages, and apps rather than running a script. The guidance steers component architecture, layout composition, typography pairing, and color-palette choices toward distinctive, production-grade output. It explicitly steers away from generic AI-look defaults — purple/blue gradients, rounded-everything cards, Inter font with gray text, centered hero sections, and glass-morphism overlays — pushing instead toward strong typographic hierarchy, intentional whitespace, and brand-specific color systems. The result shapes the frontend code you generate rather than post-processing it, so design quality is baked in from the first line.",
     "use_when": [
       "Building a web component, page, or full frontend app where design quality matters",
       "Existing UI feels generic or 'AI-generated' and needs a distinctive visual identity",
@@ -1217,7 +1217,7 @@
   {
     "name": "review",
     "category": "builtin",
-    "tagline": "Review a pull request end-to-end",
+    "tagline": "Review an existing GitHub pull request (PR URL or branch's open PR) end-to-end — not a local diff",
     "triggers": [
       "/review",
       "review this PR",
