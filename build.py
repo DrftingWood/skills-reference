@@ -103,9 +103,9 @@ def render_index(skills):
                 continue
             slug = slugify(s["name"])
             rows.append(
-                f'<li data-usage="{s["usage"]}">'
+                f'<li data-usage="{html.escape(s["usage"])}">'
                 f'<a href="{cat}.html#{slug}">{html.escape(s["name"])}</a>'
-                f' <span class="badge usage-{s["usage"]}">{html.escape(s["usage"])}</span>'
+                f' <span class="badge usage-{html.escape(s["usage"])}">{html.escape(s["usage"])}</span>'
                 f' — {html.escape(s["tagline"])}</li>'
             )
         if rows:
@@ -113,7 +113,7 @@ def render_index(skills):
     controls = (
         '<div class="filter">Filter by usage: '
         + '<button data-filter="all">all</button> '
-        + " ".join(f'<button data-filter="{u}">{u}</button>' for u in USAGE_VALUES)
+        + " ".join(f'<button data-filter="{html.escape(u)}">{u}</button>' for u in USAGE_VALUES)
         + "</div>"
     )
     script = """<script>

@@ -96,7 +96,7 @@ class TestIndex(unittest.TestCase):
 
     def test_shows_total_count(self):
         page = build.render_index([_entry(name="a"), _entry(name="b")])
-        self.assertIn("2", page)
+        self.assertIn("2 skills total", page)
 
 
 if __name__ == "__main__":
