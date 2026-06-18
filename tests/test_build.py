@@ -177,6 +177,16 @@ class TestBuildAndVerify(unittest.TestCase):
             written, skills = build.build_site(root)
             self.assertEqual(build.verify_site(root, skills), [])
 
+    def test_verify_detects_broken_anchor(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = self._root(d)
+            written, skills = build.build_site(root)
+            # Overwrite personal.html so the expected id="alpha" anchor is gone
+            broken_page = root / "site" / "personal.html"
+            broken_page.write_text("<html><body>no anchors here</body></html>", encoding="utf-8")
+            problems = build.verify_site(root, skills)
+            self.assertTrue(len(problems) > 0, "verify_site should report problems when anchor is missing")
+
     def test_build_idempotent_wipes_stale_files(self):
         with tempfile.TemporaryDirectory() as d:
             root = self._root(d)

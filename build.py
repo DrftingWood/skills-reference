@@ -226,14 +226,22 @@ def verify_site(root, skills):
             continue
         if f'id="{slugify(s["name"])}"' not in page.read_text(encoding="utf-8"):
             problems.append(f"{s['name']}: anchor missing from {page.name}")
-    index = (out / "index.html").read_text(encoding="utf-8")
-    for href in re.findall(r'href="([^"]+\.html(?:#[^"]+)?)"', index):
-        file_part, _, anchor = href.partition("#")
-        target = out / file_part
-        if not target.exists():
-            problems.append(f"index links to missing file {file_part}")
-        elif anchor and f'id="{anchor}"' not in target.read_text(encoding="utf-8"):
-            problems.append(f"index links to missing anchor #{anchor} in {file_part}")
+    def _check_page_links(page_name):
+        page_path = out / page_name
+        if not page_path.exists():
+            problems.append(f"missing page {page_name}")
+            return
+        content = page_path.read_text(encoding="utf-8")
+        for href in re.findall(r'href="([^"]+\.html(?:#[^"]+)?)"', content):
+            file_part, _, anchor = href.partition("#")
+            target = out / file_part
+            if not target.exists():
+                problems.append(f"{page_name} links to missing file {file_part}")
+            elif anchor and f'id="{anchor}"' not in target.read_text(encoding="utf-8"):
+                problems.append(f"{page_name} links to missing anchor #{anchor} in {file_part}")
+
+    for page_name in ("index.html", "decision-guide.html"):
+        _check_page_links(page_name)
     return problems
 
 
