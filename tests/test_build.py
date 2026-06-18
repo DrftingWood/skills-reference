@@ -85,5 +85,19 @@ class TestCategoryPage(unittest.TestCase):
         self.assertIn("often", page)
 
 
+class TestIndex(unittest.TestCase):
+    def test_links_to_category_anchor(self):
+        page = build.render_index([_entry(name="alpha", category="mcp")])
+        self.assertIn('href="mcp.html#alpha"', page)
+
+    def test_marks_usage_for_filtering(self):
+        page = build.render_index([_entry(name="alpha", usage="never-yet")])
+        self.assertIn('data-usage="never-yet"', page)
+
+    def test_shows_total_count(self):
+        page = build.render_index([_entry(name="a"), _entry(name="b")])
+        self.assertIn("2", page)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -91,3 +91,40 @@ def render_category_page(category, skills):
     cards = "\n".join(render_skill_card(s) for s in skills if s["category"] == category)
     body = f'<section class="cards">{cards}</section>'
     return templates.page_shell(f"{category.title()} skills", body, render_nav(f"{category}.html"))
+
+
+def render_index(skills):
+    total = len(skills)
+    sections = []
+    for cat in CATEGORIES:
+        rows = []
+        for s in skills:
+            if s["category"] != cat:
+                continue
+            slug = slugify(s["name"])
+            rows.append(
+                f'<li data-usage="{s["usage"]}">'
+                f'<a href="{cat}.html#{slug}">{html.escape(s["name"])}</a>'
+                f' <span class="badge usage-{s["usage"]}">{html.escape(s["usage"])}</span>'
+                f' — {html.escape(s["tagline"])}</li>'
+            )
+        if rows:
+            sections.append(f'<h2>{cat.title()} ({len(rows)})</h2><ul class="skill-list">' + "".join(rows) + "</ul>")
+    controls = (
+        '<div class="filter">Filter by usage: '
+        + '<button data-filter="all">all</button> '
+        + " ".join(f'<button data-filter="{u}">{u}</button>' for u in USAGE_VALUES)
+        + "</div>"
+    )
+    script = """<script>
+document.querySelectorAll('.filter button').forEach(function(b){
+  b.addEventListener('click', function(){
+    var f = b.getAttribute('data-filter');
+    document.querySelectorAll('.skill-list li').forEach(function(li){
+      li.style.display = (f === 'all' || li.getAttribute('data-usage') === f) ? '' : 'none';
+    });
+  });
+});
+</script>"""
+    body = f'<p class="summary">{total} skills total.</p>{controls}' + "".join(sections) + script
+    return templates.page_shell("Skills Reference", body, render_nav("index.html"))
