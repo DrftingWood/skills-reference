@@ -61,5 +61,29 @@ class TestLoadSkills(unittest.TestCase):
             self.assertEqual(len(build.load_skills(p)), 1)
 
 
+class TestCategoryPage(unittest.TestCase):
+    def test_contains_each_skill_anchor(self):
+        skills = [_entry(name="alpha"), _entry(name="beta")]
+        page = build.render_category_page("personal", skills)
+        self.assertIn('id="alpha"', page)
+        self.assertIn('id="beta"', page)
+
+    def test_only_includes_matching_category(self):
+        skills = [_entry(name="alpha", category="personal"),
+                  _entry(name="beta", category="mcp")]
+        page = build.render_category_page("personal", skills)
+        self.assertIn('id="alpha"', page)
+        self.assertNotIn('id="beta"', page)
+
+    def test_escapes_html_in_content(self):
+        page = build.render_category_page("personal", [_entry(tagline="a < b & c")])
+        self.assertIn("a &lt; b &amp; c", page)
+        self.assertNotIn("a < b & c", page)
+
+    def test_shows_usage_badge(self):
+        page = build.render_category_page("personal", [_entry(usage="often")])
+        self.assertIn("often", page)
+
+
 if __name__ == "__main__":
     unittest.main()
