@@ -1,28 +1,1770 @@
 [
   {
+    "name": "docx",
+    "category": "personal",
+    "tagline": "Create, edit, and analyze Word .docx files with full formatting control",
+    "triggers": [
+      "mention of 'Word doc', 'word document', or '.docx'",
+      "requests for report, memo, letter, or template as a Word file",
+      "working with tracked changes, comments, or headings in a document",
+      "extracting or reorganizing content from .docx files"
+    ],
+    "deep_dive": "New documents are generated via the `docx` npm library (JavaScript), using Document/Packer/Paragraph/Table/ImageRun and related classes, then validated with a Python `scripts/office/validate.py` script. Existing documents are edited through an unpack-edit-repack cycle: `scripts/office/unpack.py` extracts the ZIP into pretty-printed XML, edits are made directly to the XML using the Edit tool, and `scripts/office/pack.py` repacks with auto-repair. Text extraction uses `pandoc`, legacy .doc conversion uses LibreOffice via `scripts/office/soffice.py`, and PDF/image rendering uses LibreOffice plus Poppler's `pdftoppm`. The skill handles tracked changes, comments (via `scripts/comment.py`), tables of contents, headers/footers, multi-column layouts, footnotes, hyperlinks, and images in both creation and editing paths.",
+    "use_when": [
+      "Producing a polished Word document (report, memo, contract, letter)",
+      "Editing an existing .docx file, adding tracked changes or comments",
+      "Extracting text or tables from a Word document",
+      "Converting a .doc file to .docx before editing"
+    ],
+    "not_for": [
+      "PDFs (use the pdf skill)",
+      "Spreadsheets or Google Docs",
+      "General coding tasks unrelated to document generation"
+    ],
+    "combos": ["docx → avoid-ai-writing"],
+    "overlaps_with": [
+      "pdf / pptx / xlsx (different file formats — pick by output type)",
+      "google-docs (cloud-based Google document instead of a local .docx file)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/docx/SKILL.md"
+  },
+  {
+    "name": "pdf",
+    "category": "personal",
+    "tagline": "Read, create, merge, split, OCR, watermark, and manipulate PDF files",
+    "triggers": [
+      "any mention of a .pdf file or producing a PDF",
+      "merging, splitting, rotating, or watermarking PDFs",
+      "extracting text or tables from a PDF",
+      "OCR on scanned documents"
+    ],
+    "deep_dive": "The skill uses three main Python libraries: `pypdf` for structural operations (merge, split, rotate, encrypt/decrypt, metadata), `pdfplumber` for layout-aware text and table extraction (including pandas DataFrame output), and `reportlab` for creating new PDFs from scratch via Canvas or the Platypus flow engine. Command-line tools `qpdf` and `pdftotext` (poppler-utils) handle additional merge/split/text needs. For scanned PDFs, `pdf2image` converts pages to images and `pytesseract` runs OCR. Form filling is covered in a separate `FORMS.md` (using `pdf-lib` or `pypdf`). Advanced usage and JavaScript library details live in a `REFERENCE.md`.",
+    "use_when": [
+      "Extracting text or structured tables from a PDF",
+      "Merging multiple PDFs or splitting one into pages",
+      "Creating a new PDF document from scratch",
+      "Running OCR on a scanned PDF to make it searchable"
+    ],
+    "not_for": [
+      "Word documents (use the docx skill)",
+      "Spreadsheet files (use xlsx skill)",
+      "Google Docs or HTML reports"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "docx / pptx / xlsx (different file formats — pick by output type)",
+      "csv-summarizer (if extracting tabular data for analysis rather than just reading)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/pdf/SKILL.md"
+  },
+  {
+    "name": "pptx",
+    "category": "personal",
+    "tagline": "Create, edit, read, and visually QA PowerPoint presentation files",
+    "triggers": [
+      "any mention of 'deck', 'slides', 'presentation', or a .pptx filename",
+      "creating a pitch deck or slide deck from scratch",
+      "editing, extracting text from, or combining .pptx files",
+      "working with slide templates, layouts, or speaker notes"
+    ],
+    "deep_dive": "Text extraction uses `python -m markitdown presentation.pptx`. For creating from scratch, the skill uses `pptxgenjs` (npm) with detailed guidance in `pptxgenjs.md`. For editing existing files, the workflow is: analyze with `scripts/thumbnail.py`, unpack XML with `scripts/office/unpack.py`, edit content, then repack — detailed in `editing.md`. Visual QA converts the final `.pptx` to PDF via LibreOffice (`scripts/office/soffice.py`) then to per-slide JPEG images via Poppler's `pdftoppm`, which are then inspected by subagents for layout issues. The skill includes strong design guidance: bold color palettes, layout variety, typography pairings, and an explicit list of common AI-generated slide mistakes to avoid.",
+    "use_when": [
+      "Creating a new presentation or pitch deck",
+      "Editing or updating slides in an existing .pptx file",
+      "Extracting text or content from a PowerPoint file",
+      "Visually QA-ing slides for layout and design issues"
+    ],
+    "not_for": [
+      "PDFs (use the pdf skill)",
+      "Word documents (use the docx skill)",
+      "Google Slides API integration"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "docx / pdf / xlsx (different file formats — pick by output type)",
+      "google-slides (cloud-based Google Slides instead of a local .pptx file)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/pptx/SKILL.md"
+  },
+  {
+    "name": "xlsx",
+    "category": "personal",
+    "tagline": "Create, edit, analyze, and format Excel spreadsheets with live formulas",
+    "triggers": [
+      "any task where the deliverable is a .xlsx, .xlsm, .csv, or .tsv file",
+      "opening, reading, editing, or fixing an existing spreadsheet",
+      "creating a financial model, budget, or data table in Excel",
+      "cleaning or restructuring messy tabular data into a proper spreadsheet"
+    ],
+    "deep_dive": "The skill uses `pandas` for data analysis and bulk operations (`pd.read_excel`, `pd.to_excel`) and `openpyxl` for formula insertion, cell formatting, and Excel-specific features (fonts, fills, alignment, column widths). A critical rule is to always write Excel formulas as strings (e.g., `'=SUM(B2:B9)'`) rather than computing values in Python. After writing formulas, `scripts/recalc.py` invokes LibreOffice to recalculate all cells and returns a JSON report of any formula errors (`#REF!`, `#DIV/0!`, etc.) with their exact cell locations. Financial models follow industry-standard color conventions (blue for hardcoded inputs, black for formulas, green for cross-sheet links) and number formatting rules (currency with units, parentheses for negatives, DXA-style zeros as \"-\").",
+    "use_when": [
+      "Creating or editing an .xlsx file with formulas and formatting",
+      "Building a financial model with assumptions, projections, and color coding",
+      "Cleaning or restructuring messy tabular data into a proper spreadsheet",
+      "Converting between tabular file formats (CSV, TSV, XLSX)"
+    ],
+    "not_for": [
+      "Word documents, HTML reports, or standalone Python scripts (even if tabular data is involved)",
+      "Google Sheets API integration",
+      "Database pipelines where the output is not a spreadsheet file"
+    ],
+    "combos": ["csv-summarizer → xlsx"],
+    "overlaps_with": [
+      "google-sheets (same data but cloud-hosted; use xlsx for local files, google-sheets for live collaboration)",
+      "csv-summarizer (analysis and charts vs. a formatted spreadsheet deliverable)",
+      "docx / pdf / pptx (different file formats)"
+    ],
+    "usage": "often",
+    "source": "C:/Users/achar/.claude/skills/xlsx/SKILL.md"
+  },
+  {
+    "name": "csv-summarizer",
+    "category": "personal",
+    "tagline": "Auto-analyze any CSV file with stats, visualizations, and actionable insights — no prompting needed",
+    "triggers": [
+      "user uploads or references a CSV file",
+      "asks to summarize, analyze, or visualize tabular data",
+      "requests insights or trends from a CSV or dataset",
+      "wants to understand data structure and quality"
+    ],
+    "deep_dive": "The skill calls a `summarize_csv(file_path)` Python function that loads the CSV into a pandas DataFrame, inspects column types (numeric, categorical, date/timestamp), and auto-selects relevant analyses: time-series trend plots only if date columns exist, correlation heatmaps only if multiple numeric columns exist, and category distributions only if categorical columns exist. Visualizations are produced using matplotlib and seaborn. The skill adapts its analysis focus to the detected data domain — sales/e-commerce, customer demographics, financial transactions, operational metrics, or survey responses — and produces a complete output (overview, statistics, missing-data report, plots, insights) in a single pass without asking the user any follow-up questions.",
+    "use_when": [
+      "Quickly understanding the structure and quality of a new CSV dataset",
+      "Getting automatic trend, distribution, and correlation charts from tabular data",
+      "Exploring sales, customer, financial, or operational CSV exports",
+      "Identifying missing data patterns and key statistics at a glance"
+    ],
+    "not_for": [
+      "Non-CSV files (use xlsx skill for spreadsheets)",
+      "Deep custom analyses requiring specific business logic beyond auto-detection",
+      "Writing the analysis output back to a file (produces text + charts, not a new spreadsheet)"
+    ],
+    "combos": ["csv-summarizer → xlsx", "csv-summarizer → deep-research"],
+    "overlaps_with": [
+      "xlsx (csv-summarizer gives analysis + charts; xlsx gives a formatted spreadsheet deliverable)",
+      "google-sheets (csv-summarizer for one-shot insight; google-sheets for ongoing live data)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/csv-summarizer/SKILL.md"
+  },
+  {
+    "name": "postgres",
+    "category": "personal",
+    "tagline": "Run safe read-only SELECT queries against configured PostgreSQL databases",
+    "triggers": [
+      "querying a PostgreSQL database",
+      "exploring PostgreSQL schemas, tables, or database contents",
+      "running SELECT queries for data analysis against Postgres",
+      "checking what data is in a configured Postgres database"
+    ],
+    "deep_dive": "The skill wraps a Python script `scripts/query.py` that reads connection credentials from `connections.json` (or `~/.config/claude/postgres-connections.json`) and connects via `psycopg2-binary`. Safety is enforced at two levels: the connection uses PostgreSQL `readonly=True` mode, and a query validator only permits SELECT, SHOW, EXPLAIN, and WITH statements, rejecting multi-statement inputs. Results are capped at 10,000 rows and 100 chars per column. A 30-second statement timeout is enforced server-side. The `--list` flag enumerates configured databases, `--tables` and `--schema` support schema exploration, and `--limit` applies a row cap. Database auto-selection matches the user's intent keywords against each connection's `description` field.",
+    "use_when": [
+      "Querying a PostgreSQL database to look up or analyze data",
+      "Exploring the schema or table structure of a Postgres database",
+      "Running ad-hoc SELECT queries for data investigation",
+      "Checking the contents of a configured production or staging database"
+    ],
+    "not_for": [
+      "Write operations (INSERT, UPDATE, DELETE, DROP) — these are blocked by design",
+      "MySQL or SQL Server databases (use the mysql or mssql skills)",
+      "Databases not configured in connections.json"
+    ],
+    "combos": ["postgres → csv-summarizer"],
+    "overlaps_with": [
+      "mysql / mssql (same read-only SQL skill for different engines — pick by your DB type)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/postgres/SKILL.md"
+  },
+  {
+    "name": "mysql",
+    "category": "personal",
+    "tagline": "Run safe read-only SELECT queries against configured MySQL databases",
+    "triggers": [
+      "querying a MySQL database",
+      "exploring MySQL schemas, tables, or database contents",
+      "running SELECT queries for data analysis against MySQL",
+      "checking what data is in a configured MySQL database"
+    ],
+    "deep_dive": "The skill wraps `scripts/query.py` using `mysql-connector-python` to connect to databases defined in `connections.json` (or `~/.config/claude/mysql-connections.json`). Safety is enforced at two levels: the session is set to `TRANSACTION READ ONLY`, and query validation allows only SELECT, SHOW, DESCRIBE, EXPLAIN, and WITH statements. A 30-second `max_execution_time` is set (requires MySQL 5.7.8+), results cap at 10,000 rows and 100 chars per column, and error messages are sanitized to avoid leaking credentials. SSL is configurable with CA, client cert, and key paths. Database selection uses `description` field matching, and `--list`, `--tables`, `--schema`, and `--limit` flags mirror the postgres skill's interface.",
+    "use_when": [
+      "Querying a MySQL database to look up or analyze data",
+      "Exploring the schema or table structure of a MySQL database",
+      "Running ad-hoc SELECT queries against a MySQL data source",
+      "Checking contents of a configured MySQL production or dev database"
+    ],
+    "not_for": [
+      "Write operations (INSERT, UPDATE, DELETE, DROP) — blocked by design",
+      "PostgreSQL or SQL Server databases (use postgres or mssql skills)",
+      "Databases not configured in connections.json"
+    ],
+    "combos": ["mysql → csv-summarizer"],
+    "overlaps_with": [
+      "postgres / mssql (same read-only SQL skill for different engines — pick by your DB type)"
+    ],
+    "usage": "rarely",
+    "source": "C:/Users/achar/.claude/skills/mysql/SKILL.md"
+  },
+  {
+    "name": "mssql",
+    "category": "personal",
+    "tagline": "Run safe read-only SELECT queries against configured Microsoft SQL Server databases",
+    "triggers": [
+      "querying an MSSQL or SQL Server database",
+      "exploring SQL Server schemas, tables, or database contents",
+      "running SELECT queries for data analysis against SQL Server",
+      "checking data in a configured Microsoft SQL Server or Azure SQL database"
+    ],
+    "deep_dive": "The skill wraps `scripts/query.py` using `pymssql` to connect to databases defined in `connections.json` (or `~/.config/claude/mssql-connections.json`), with TDS protocol version and TLS encryption configurable per connection. Query validation permits only SELECT, SHOW, EXPLAIN, WITH, and SP_HELP statements; multi-statement inputs are rejected. A 30-second pymssql query timeout and a 10-second login timeout are enforced. The `--limit` flag automatically rewrites the query to inject `TOP N` after SELECT (MSSQL syntax). Results cap at 10,000 rows and 100 chars per column. Unlike the postgres skill's server-side readonly mode, MSSQL relies on query validation plus recommending a `db_datareader` role user for server-side protection.",
+    "use_when": [
+      "Querying a Microsoft SQL Server or Azure SQL database",
+      "Exploring the schema or table structure of an MSSQL database",
+      "Running ad-hoc SELECT queries for data investigation against SQL Server",
+      "Checking data contents of a configured MSSQL production or staging database"
+    ],
+    "not_for": [
+      "Write operations (INSERT, UPDATE, DELETE, DROP) — blocked by design",
+      "PostgreSQL or MySQL databases (use postgres or mysql skills)",
+      "Databases not configured in connections.json"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "postgres / mysql (same read-only SQL skill for different engines — pick by your DB type)"
+    ],
+    "usage": "never-yet",
+    "source": "C:/Users/achar/.claude/skills/mssql/SKILL.md"
+  },
+  {
+    "name": "google-chat",
+    "category": "personal",
+    "tagline": "Send messages, read chats, and manage Google Chat spaces via standalone OAuth",
+    "triggers": [
+      "send a message on Google Chat",
+      "read chat messages or list spaces",
+      "send a DM on Chat",
+      "create a new chat space"
+    ],
+    "deep_dive": "Operates through two Python scripts: `scripts/auth.py` handles OAuth browser-based login, storing tokens in the OS system keyring (Windows Credential Locker, macOS Keychain, Linux Secret Service) under service name `google-chat-skill-oauth`. All chat operations run via `scripts/chat.py`, which auto-authenticates on first use. Commands cover listing/finding spaces, reading messages with limits, sending messages or DMs (optionally with file attachments), listing threads, and creating spaces with members. Space names follow Google's `spaces/AAAA123` format, obtained via list or find commands. Tokens auto-refresh using Google's cloud function. Requires a Google Workspace account — personal Gmail is not supported.",
+    "use_when": [
+      "Sending a message or file to a Google Chat space or DM",
+      "Reading recent messages from a team Chat room",
+      "Creating a new Chat space and adding members",
+      "Finding which spaces you belong to"
+    ],
+    "not_for": [
+      "Personal Gmail accounts (Google Workspace only)",
+      "Full Google Workspace admin operations beyond messaging",
+      "Replacing a full MCP server when one is already configured"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "Gmail (messaging vs. email — both Google comms, different channels)"
+    ],
+    "usage": "rarely",
+    "source": "C:/Users/achar/.claude/skills/google-chat/SKILL.md"
+  },
+  {
+    "name": "google-docs",
+    "category": "personal",
+    "tagline": "Create, search, read, and edit Google Docs via lightweight standalone OAuth",
+    "triggers": [
+      "create a Google Doc",
+      "find or read a document",
+      "add or replace text in a Google Doc",
+      "get doc content from a URL or ID"
+    ],
+    "deep_dive": "Uses `scripts/auth.py` for browser-based OAuth login with tokens stored in the OS keyring under `google-docs-skill-oauth`; tokens auto-refresh via Google's cloud function. All document operations go through `scripts/docs.py`. Supported actions: create a doc (with optional initial content), find docs by title keyword (up to a configurable limit), get full text content (accepts either a document ID or full URL — ID is extracted automatically), append text to the end, insert text at the beginning, and find-and-replace text strings. Requires a Google Workspace account.",
+    "use_when": [
+      "Creating a new Google Doc with initial content",
+      "Reading the text content of an existing document by URL or ID",
+      "Appending notes or findings to a running doc",
+      "Doing a find-and-replace across a document"
+    ],
+    "not_for": [
+      "Personal Gmail accounts (Google Workspace only)",
+      "Complex formatting, images, or table manipulation beyond text",
+      "Replacing a full Google Workspace MCP server"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "docx (cloud-hosted Google Doc vs. local .docx file — pick by where the doc lives)",
+      "Google Drive (Drive for file management; google-docs for reading/editing content)"
+    ],
+    "usage": "rarely",
+    "source": "C:/Users/achar/.claude/skills/google-docs/SKILL.md"
+  },
+  {
+    "name": "google-sheets",
+    "category": "personal",
+    "tagline": "Full read/write access to Google Sheets — cells, ranges, rows, and metadata",
+    "triggers": [
+      "read or update a Google Sheets spreadsheet",
+      "append rows or clear cells in Sheets",
+      "find a spreadsheet by name",
+      "get cell values from a range"
+    ],
+    "deep_dive": "OAuth handled by `scripts/auth.py` with tokens stored in the OS keyring under `google-sheets-skill-oauth`; access tokens auto-refresh. All operations go through `scripts/sheets.py`. Read commands: get full sheet content in text/CSV/JSON format, get a specific A1-notation range, find spreadsheets by search query, get metadata (sheet names, dimensions). Write commands: update a cell range with a 2D JSON array (USER_ENTERED or RAW mode), append rows after the last data row, clear a range, and issue raw batch-update requests for advanced operations like formatting and merging. Spreadsheet IDs are accepted as bare IDs or full URLs. Requires Google Workspace.",
+    "use_when": [
+      "Reading or parsing data from a Google Sheets spreadsheet",
+      "Writing computed results or new rows back into a sheet",
+      "Searching for a spreadsheet by name in Drive",
+      "Automating bulk cell updates or data entry"
+    ],
+    "not_for": [
+      "Personal Gmail accounts (Google Workspace only)",
+      "Creating new spreadsheets from scratch (use Drive for that)",
+      "Complex chart or pivot-table creation beyond batch-update API"
+    ],
+    "combos": ["csv-summarizer → google-sheets"],
+    "overlaps_with": [
+      "xlsx (google-sheets for live cloud collaboration; xlsx for local .xlsx file delivery)",
+      "Google Drive (Drive for file management; google-sheets for reading/editing cell data)"
+    ],
+    "usage": "often",
+    "source": "C:/Users/achar/.claude/skills/google-sheets/SKILL.md"
+  },
+  {
+    "name": "google-slides",
+    "category": "personal",
+    "tagline": "Read and write Google Slides — find, create, add slides, replace text, and batch-update",
+    "triggers": [
+      "read or create a Google Slides presentation",
+      "add a slide or replace text in a presentation",
+      "find presentations by title",
+      "get slide content or metadata"
+    ],
+    "deep_dive": "OAuth handled by `scripts/auth.py` with tokens stored under `google-slides-skill-oauth` in the OS keyring; auto-refreshes. All operations go through `scripts/slides.py`. Read commands: get all text content from shapes and tables across slides, find presentations by title keyword, get metadata (title, slide count, object IDs). Write commands: create a new empty presentation, add blank or layout-specific slides at any position, find-and-replace text across all slides (with optional case matching), delete slides by object ID, and issue raw batch-update JSON for formatting, shape insertion, or image operations. Accepts either bare IDs or full URLs. Requires Google Workspace.",
+    "use_when": [
+      "Extracting text content from an existing presentation",
+      "Creating a new presentation and populating it with slides",
+      "Doing a global find-and-replace across all slide text",
+      "Adding slides with specific layouts at precise positions"
+    ],
+    "not_for": [
+      "Personal Gmail accounts (Google Workspace only)",
+      "Complex animation or media embedding (use batch-update API directly)",
+      "Replacing a full Google Workspace MCP server"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "pptx (cloud-hosted Google Slides vs. local .pptx file — pick by where the deck lives)"
+    ],
+    "usage": "rarely",
+    "source": "C:/Users/achar/.claude/skills/google-slides/SKILL.md"
+  },
+  {
+    "name": "web-artifacts-builder",
+    "category": "personal",
+    "tagline": "Build multi-component React+Tailwind+shadcn/ui claude.ai artifacts bundled into a single HTML file",
+    "triggers": [
+      "build a complex HTML artifact with React or shadcn/ui",
+      "create a multi-component frontend artifact",
+      "bundle a React app into a single HTML file for Claude",
+      "/web-artifacts-builder"
+    ],
+    "deep_dive": "Workflow has four steps: (1) run `scripts/init-artifact.sh <project-name>` to scaffold a Vite+React+TypeScript project with Tailwind CSS 3.4.1, shadcn/ui theming, 40+ pre-installed Radix UI components, and path aliases — supports Node 18+ with auto-detected Vite version pinning; (2) develop by editing generated files; (3) run `scripts/bundle-artifact.sh` which installs Parcel and html-inline, builds with Parcel (no source maps), and inlines all JS/CSS into a self-contained `bundle.html`; (4) share `bundle.html` in conversation as an artifact. Testing via Playwright is optional and deferred until after the artifact is presented. Style guidelines explicitly warn against centered layouts, purple gradients, uniform rounded corners, and Inter font to avoid generic AI-generated aesthetics.",
+    "use_when": [
+      "Building a complex artifact that needs state management, routing, or shadcn/ui components",
+      "Creating an interactive dashboard or multi-view app as a Claude artifact",
+      "Needing 40+ pre-wired Radix UI components without manual setup",
+      "Producing a fully self-contained single-file HTML artifact from a React codebase"
+    ],
+    "not_for": [
+      "Simple single-file HTML or JSX artifacts that don't need a build step",
+      "Server-side or backend application development",
+      "Projects that will be deployed outside of claude.ai artifacts"
+    ],
+    "combos": ["brainstorming → frontend-design → web-artifacts-builder"],
+    "overlaps_with": [
+      "frontend-design (frontend-design for deployed web apps; web-artifacts-builder for claude.ai self-contained artifacts)",
+      "webapp-testing (web-artifacts-builder creates the artifact; webapp-testing verifies it in a browser)"
+    ],
+    "usage": "rarely",
+    "source": "C:/Users/achar/.claude/skills/web-artifacts-builder/SKILL.md"
+  },
+  {
+    "name": "webapp-testing",
+    "category": "personal",
+    "tagline": "Test and interact with local web apps using native Python Playwright scripts",
+    "triggers": [
+      "test a local web application",
+      "verify frontend functionality or capture a screenshot",
+      "debug UI behavior in a running app",
+      "automate browser interactions on localhost"
+    ],
+    "deep_dive": "Relies on native Python Playwright (`sync_playwright`) — no MCP required. A helper script `scripts/with_server.py` manages server lifecycle, supporting one or multiple concurrent servers (e.g., separate backend and frontend processes) before handing off to a Playwright automation script. The decision tree distinguishes static HTML (read file directly for selectors, then automate) from dynamic apps (use `with_server.py` + wait for `networkidle` before DOM inspection). The reconnaissance-then-action pattern is enforced: navigate, wait for `networkidle`, take a screenshot or inspect DOM, identify selectors, then execute actions. Chromium is always launched headless. Example scripts in `examples/` cover element discovery, static HTML automation, and console log capture.",
+    "use_when": [
+      "Verifying that a UI change works correctly in a running local app",
+      "Capturing screenshots of a web app at a specific state",
+      "Automating multi-step browser flows like form submission or navigation",
+      "Debugging browser console errors or UI rendering issues"
+    ],
+    "not_for": [
+      "Testing remote or production URLs (focused on local apps)",
+      "Unit or integration testing of backend logic without a browser",
+      "Static file linting or HTML validation without rendering"
+    ],
+    "combos": ["frontend-design → webapp-testing → verify"],
+    "overlaps_with": [
+      "Playwright MCP (webapp-testing uses local Python scripts; Playwright MCP provides interactive browser control via MCP tools)",
+      "verify (verify is high-level manual check; webapp-testing automates browser interactions with scripts)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/webapp-testing/SKILL.md"
+  },
+  {
+    "name": "youtube-transcript",
+    "category": "personal",
+    "tagline": "Download and clean YouTube video transcripts using yt-dlp, with Whisper fallback",
+    "triggers": [
+      "download transcript from a YouTube URL",
+      "get captions or subtitles from a YouTube video",
+      "transcribe a YouTube video",
+      "get the text content of a YouTube video"
+    ],
+    "deep_dive": "Uses `yt-dlp` as the primary tool, auto-installing it via Homebrew, apt, or pip if absent. Workflow: (1) list available subtitles with `--list-subs`; (2) try manual subtitles (`--write-sub --skip-download`) for highest quality; (3) fall back to auto-generated (`--write-auto-sub`); (4) last resort — ask user confirmation, then download audio with `-x --audio-format mp3` and transcribe with `openai-whisper` using the `base` model. Downloaded subtitles are in WebVTT (`.vtt`) format. Post-processing deduplicates overlapping auto-generated caption lines via a Python one-liner that strips VTT headers, timestamps, and HTML tags, writing a clean `.txt` file named after the video title. Temporary VTT and audio files are cleaned up after conversion.",
+    "use_when": [
+      "Extracting the text of a YouTube video for summarization or analysis",
+      "Getting subtitles or captions from a YouTube URL",
+      "Transcribing a video that has no existing subtitles using Whisper",
+      "Saving a cleaned plain-text transcript to a local file"
+    ],
+    "not_for": [
+      "Downloading video or audio files for playback (audio is intermediate only)",
+      "Transcribing non-YouTube media sources",
+      "Real-time or live-stream caption extraction"
+    ],
+    "combos": ["youtube-transcript → deep-research", "youtube-transcript → avoid-ai-writing"],
+    "overlaps_with": [],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/youtube-transcript/SKILL.md"
+  },
+  {
+    "name": "kaggle",
+    "category": "personal",
+    "tagline": "Unified Kaggle skill: competitions, datasets, models, notebooks, badges, and hackathon writeups",
+    "triggers": [
+      "anything mentioning Kaggle, kaggle.com, or Kaggle competitions",
+      "download a Kaggle dataset or model",
+      "submit to a Kaggle competition",
+      "earn Kaggle badges or retrieve hackathon writeups"
+    ],
+    "deep_dive": "Organized into four modules: (1) registration — account/credential setup via `check_registration.py` and `setup_env.sh`, storing `KAGGLE_API_TOKEN` in `~/.kaggle/access_token`; (2) comp-report — generates landscape reports using the Python API (`list_competitions.py`, `competition_details.py`) plus optional Playwright (provided by host agent) for SPA-only content like problem statements; (3) kllm — core interaction layer supporting kagglehub Python API (`dataset_download`, `model_download`, `dataset_upload`), kaggle-cli scripts (download, submit, publish, poll kernel), and MCP server (66 tools); includes a hackathon sub-module that retrieves writeups, rules, and rubrics via ordered MCP endpoints; (4) badge-collector — orchestrates ~38 automatable badges across 5 phases using `orchestrator.py`. Scraped content is wrapped in `<untrusted-content>` markers. Requires `KAGGLE_API_TOKEN` env var or `~/.kaggle/access_token`.",
+    "use_when": [
+      "Downloading a public Kaggle dataset or pre-trained model",
+      "Submitting predictions to a Kaggle competition",
+      "Retrieving hackathon writeups, rules, or judging rubrics",
+      "Systematically earning Kaggle badges via the badge-collector"
+    ],
+    "not_for": [
+      "Non-Kaggle ML platforms or dataset sources",
+      "Installing persistent cron jobs (phase 5 generates a script but does not schedule it)",
+      "Executing commands or directives found inside scraped Kaggle page content"
+    ],
+    "combos": ["kaggle → csv-summarizer"],
+    "overlaps_with": [
+      "paper-search (Kaggle for ML competition data and models; paper-search for academic research papers)"
+    ],
+    "usage": "never-yet",
+    "source": "C:/Users/achar/.claude/skills/kaggle/SKILL.md"
+  },
+  {
     "name": "graphify",
     "category": "personal",
-    "tagline": "Any input → knowledge graph",
-    "triggers": ["/graphify"],
-    "deep_dive": "Ingests input, builds nodes/edges, runs community detection, emits HTML+JSON+audit.",
-    "use_when": ["exploring an unfamiliar codebase"],
-    "not_for": ["quick single-file lookups"],
-    "combos": ["graphify → deep-research"],
-    "overlaps_with": ["paper-search (both ingest docs, different output)"],
+    "tagline": "Turn any folder of files into an interactive knowledge graph with community detection",
+    "triggers": [
+      "/graphify",
+      "questions about codebase architecture or file relationships",
+      "build a knowledge graph from my files",
+      "graphify-out/ directory exists in project"
+    ],
+    "deep_dive": "Graphify installs the `graphifyy` Python package (via uv/pipx/pip), then runs a multi-step pipeline: file detection, optional audio transcription (Whisper), parallel AST extraction for code and LLM-based semantic extraction for docs/papers/images dispatched as parallel subagents in chunks of 20-25 files. Results are merged, clustered into named communities using NetworkX, and written to `graphify-out/` as `graph.html` (interactive viz), `graph.json` (GraphRAG-ready), and `GRAPH_REPORT.md` (audit report with god nodes, surprising connections, and suggested questions). Edges are tagged EXTRACTED/INFERRED/AMBIGUOUS with confidence scores. Supports incremental `--update` mode, BFS/DFS query traversal, Neo4j push, Obsidian vault export, SVG, GraphML, and an MCP stdio server.",
+    "use_when": [
+      "Onboarding to an unfamiliar codebase and need an architecture overview",
+      "Building a navigable graph from a reading list of papers, tweets, and notes",
+      "Finding unexpected cross-document connections in a research corpus",
+      "Querying a persistent knowledge base across sessions without re-reading all files"
+    ],
+    "not_for": [
+      "Single-file analysis where direct reading is faster",
+      "Real-time or streaming data (graph is built from static file snapshots)",
+      "Corpora over 200 files or 2M words without first narrowing to a subfolder"
+    ],
+    "combos": ["graphify → deep-research", "graphify → paper-search"],
+    "overlaps_with": [
+      "deep-research (graphify maps what you already have; deep-research fetches new external sources)",
+      "paper-search (graphify for local doc corpora; paper-search for external academic search)"
+    ],
     "usage": "sometimes",
     "source": "C:/Users/achar/.claude/skills/graphify/SKILL.md"
   },
   {
+    "name": "grill-me",
+    "category": "personal",
+    "tagline": "Relentless one-at-a-time interviewer that stress-tests plans until every branch is resolved",
+    "triggers": [
+      "grill me",
+      "stress-test my plan",
+      "interview me about this design",
+      "help me think through this decision"
+    ],
+    "deep_dive": "The skill instructs Claude to interview the user relentlessly about every aspect of a plan or design, walking each branch of the decision tree one dependency at a time. Questions are asked one at a time (not in batches). For each question, Claude provides its own recommended answer to move the conversation forward. If a question can be answered by exploring the codebase, Claude does so rather than asking. The goal is to reach shared understanding with all decision branches resolved, not just a surface-level Q&A.",
+    "use_when": [
+      "Before implementing a significant feature or architectural change",
+      "When a plan feels underspecified and you want to surface hidden assumptions",
+      "When you want an independent perspective on your design choices",
+      "Preparing for a technical design review with colleagues"
+    ],
+    "not_for": [
+      "Casual brainstorming where loose exploration is preferred over resolution",
+      "Tasks where the design is already finalized and only implementation is needed"
+    ],
+    "combos": ["grill-me → brainstorming → writing-plans"],
+    "overlaps_with": [
+      "brainstorming (grill-me interrogates the user; brainstorming proposes design options — use grill-me first when intent is unclear)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/grill-me/SKILL.md"
+  },
+  {
+    "name": "kanban-ai",
+    "category": "personal",
+    "tagline": "Markdown-file Kanban board manager with narrative history and blocking logic",
+    "triggers": [
+      "create/move/view/list a task or card on the kanban board",
+      "track work items across backlog, todo, doing, done, archive",
+      "show me the board",
+      "add a kanban card"
+    ],
+    "deep_dive": "Cards are individual `.md` files in a `kanban/` directory, with YAML frontmatter fields for id, status, priority, blocked_by, assignee, due_date, and tags. Board state is derived by reading all card files and grouping by status. Bash helper scripts in a `scripts/` subdirectory handle board viewing (`view_board.sh`), tag search, content search, blocked-card display, tag listing, and full card listing. Before moving a card to `doing`, the skill verifies that all `blocked_by` IDs have status `done`. Every meaningful card update appends a narrative note to a `## Narrative` section, preserving the story of the card for future review. Completed cards can be archived by moving the file to `kanban/archived/`.",
+    "use_when": [
+      "Tracking personal or team tasks across workflow stages in a text-first environment",
+      "Managing dependencies between tasks (blocked_by logic)",
+      "Reviewing the history and decisions behind a piece of work",
+      "Searching for cards by tag, content keyword, or blocked status"
+    ],
+    "not_for": [
+      "Real-time collaborative boards requiring live sync (files are local only)",
+      "Visual drag-and-drop interfaces (this is entirely text/Markdown-based)"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "Todoist MCP (kanban-ai is local Markdown files; Todoist is a cloud task manager with mobile apps)"
+    ],
+    "usage": "rarely",
+    "source": "C:/Users/achar/.claude/skills/kanban-ai/SKILL.md"
+  },
+  {
+    "name": "paper-search",
+    "category": "personal",
+    "tagline": "Search 250M+ academic papers via OpenAlex — no API key needed",
+    "triggers": [
+      "search for academic papers on a topic",
+      "find papers by keyword or DOI",
+      "look up a scientific paper",
+      "find research on [topic]"
+    ],
+    "deep_dive": "The skill locates two shell scripts (`search.sh` and `paper.sh`) installed alongside the skill under `~/.claude/skills/paper-search/`. `search.sh` queries the OpenAlex API for papers by keyword with configurable limit (default 10, max 200), sort order (relevance, cites, or date), and pagination. `paper.sh` fetches full metadata for a specific paper by DOI URL or OpenAlex ID, returning authors, abstract, concepts, open-access PDF link, and related work IDs. Related work IDs can be fed back into `paper.sh` to explore the citation graph iteratively. No external API key is required; OpenAlex is free and covers 250M+ works.",
+    "use_when": [
+      "Finding landmark or topical academic papers on any research subject",
+      "Getting full abstracts and metadata for a specific paper by DOI",
+      "Exploring a citation graph by chaining related-work IDs",
+      "Gathering scientific backing for a claim with proper author/year/journal citations"
+    ],
+    "not_for": [
+      "Grey literature, blog posts, or non-academic web content (use WebSearch instead)",
+      "Real-time preprints not yet indexed by OpenAlex"
+    ],
+    "combos": ["paper-search → graphify", "paper-search → deep-research"],
+    "overlaps_with": [
+      "deep-research (paper-search for peer-reviewed academic literature only; deep-research for broad multi-source web research)",
+      "context7 (paper-search for academic papers; context7 for library/SDK/API docs)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/paper-search/SKILL.md"
+  },
+  {
+    "name": "skill-check",
+    "category": "personal",
+    "tagline": "Validate SKILL.md files against Anthropic guidelines — structural, semantic, and OWASP checks",
+    "triggers": [
+      "check skill",
+      "skillcheck",
+      "validate SKILL.md",
+      "find issues in this skill definition"
+    ],
+    "deep_dive": "SkillCheck reads the target SKILL.md using only the Read and Glob tools, then applies a layered set of free-tier validation rules in four phases: Parse (extract YAML frontmatter), Validate (run all checks), Score (0-100), and Report. Checks cover frontmatter structure (required fields, name/description format, XML injection, artifact-passing fields), naming quality, semantic issues (contradictions, ambiguous terms, output format specification, wisdom/platitude detection, misplaced routing content, railroading), and design pattern classification (Reviewer/Generator/Inversion/Pipeline/Tool Wrapper from Google ADK taxonomy). It also runs 8 deterministic OWASP Agentic Top 10 checks on skills with agent surfaces, and validates Claude Code plugin manifests (`plugin.json`). Output is a structured report with overall score, issues list (check_id, severity, line, message, fix), and strengths. Pro tier adds anti-slop, token budget, security, enterprise, and WCAG checks.",
+    "use_when": [
+      "After writing or editing a SKILL.md to catch structural and semantic problems before publishing",
+      "Auditing a community skill for quality and security before installing it",
+      "Validating a Claude Code plugin manifest against Anthropic's reference schema",
+      "Checking an MCP server's tools/list response for tool-count or API-mirror issues"
+    ],
+    "not_for": [
+      "Anti-slop detection, security scanning, or token analysis (those require SkillCheck Pro)",
+      "LinkedIn skill engagement (use skillcheck-engage for that)",
+      "Eval Kit generation for automated skill testing"
+    ],
+    "combos": ["skill-creator → skill-check → writing-skills"],
+    "overlaps_with": [
+      "skill-creator (skill-check validates an existing SKILL.md; skill-creator builds or iterates on one end-to-end)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/skill-check/SKILL.md"
+  },
+  {
+    "name": "skill-creator",
+    "category": "personal",
+    "tagline": "End-to-end skill development loop: draft, run evals, benchmark, iterate, and optimize triggering",
+    "triggers": [
+      "create a new skill",
+      "turn this workflow into a skill",
+      "improve/edit an existing skill",
+      "optimize this skill's description for better triggering"
+    ],
+    "deep_dive": "Skill-creator guides the user through a full skill development lifecycle. It starts by capturing intent (what the skill does, when it triggers, expected output), then writes a SKILL.md draft with progressive-disclosure structure (frontmatter, body under 500 lines, optional scripts/references/assets). For evaluation, it spawns parallel subagents — one with the skill, one as baseline — for each test case, drafts quantitative assertions while runs are in progress, grades outputs via a grader subagent, aggregates results into `benchmark.json` using `scripts/aggregate_benchmark.py`, and launches an HTML eval viewer (`eval-viewer/generate_review.py`) for human review. After the user submits feedback, Claude improves the skill and iterates. For description optimization, it generates 20 trigger/non-trigger eval queries, opens a browser review UI, then runs `scripts/run_loop.py` (up to 5 iterations, 60/40 train/test split) to find the description with the best held-out test score.",
+    "use_when": [
+      "Building a new Claude Code skill from scratch based on a workflow or idea",
+      "Iterating on an existing skill that isn't producing good outputs",
+      "Running quantitative benchmarks to compare skill versions objectively",
+      "Optimizing a skill's description field so Claude reliably triggers it"
+    ],
+    "not_for": [
+      "Simple one-off prompts that don't need to be reusable across sessions",
+      "Skills with purely subjective outputs where quantitative evals aren't meaningful (qualitative review only)"
+    ],
+    "combos": ["skill-creator → skill-check → writing-skills"],
+    "overlaps_with": [
+      "skill-check (skill-creator builds and iterates; skill-check validates the result — use both in sequence)",
+      "writing-skills (writing-skills applies TDD discipline to skill authoring; skill-creator adds evals and benchmarking)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/skill-creator/SKILL.md"
+  },
+  {
+    "name": "avoid-ai-writing",
+    "category": "personal",
+    "tagline": "Audit and rewrite content to strip AI writing patterns across 40+ named pattern categories",
+    "triggers": [
+      "remove AI-isms",
+      "clean up AI writing / make this sound less like AI",
+      "audit writing for AI tells",
+      "edit this file in place to fix AI patterns"
+    ],
+    "deep_dive": "The skill operates in three modes: rewrite (audit + full rewrite + diff summary + second-pass audit), detect (flag only, grouped by P0/P1/P2 severity), and edit (minimal in-place file edits using the Edit tool, leaving already-human passages untouched). It applies a tiered vocabulary system: Tier 1 words (always replace, e.g. 'delve', 'leverage', 'robust'), Tier 2 words (flag when 2+ appear in the same paragraph), and Tier 3 words/phrases (flag only at high density). Beyond vocabulary, it checks 40+ structural and stylometric patterns including em-dash frequency, synonym cycling, formulaic closers, hedge-stacked predictions, chatbot artifacts, unfilled placeholders, citation markup leaks, AI-tool URL parameters, rhythm uniformity (sentence/paragraph length), and type-token ratio. Six context profiles (linkedin, blog, technical-blog, investor-email, docs, casual) and five voice profiles (casual, professional, technical, warm, blunt) adjust rule strictness and target register independently.",
+    "use_when": [
+      "Polishing LLM-drafted content before publishing to a blog, LinkedIn, or investor email",
+      "Auditing a document to flag AI tells without rewriting it yourself",
+      "Cleaning up a file in place without copy-pasting text back and forth",
+      "Applying a specific voice profile (blunt, warm, technical) to a rewrite"
+    ],
+    "not_for": [
+      "Definitive AI authorship verdicts for academic integrity or hiring decisions (signals, not proof)",
+      "Code files, quoted material, or text attributed to someone else (these are exempt from rewriting)"
+    ],
+    "combos": ["deep-research → avoid-ai-writing", "docx → avoid-ai-writing"],
+    "overlaps_with": [],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/avoid-ai-writing/SKILL.md"
+  },
+  {
+    "name": "debugging-code",
+    "category": "personal",
+    "tagline": "Interactive DAP-based debugger: set breakpoints, step through code, inspect live state",
+    "triggers": [
+      "program crashes or raises unexpected exceptions",
+      "produces wrong output and print-statement debugging isn't enough",
+      "need to understand how execution reached a certain state",
+      "interactively debug / set breakpoints"
+    ],
+    "deep_dive": "The skill uses `dap`, a CLI tool backed by a background daemon that speaks the Debug Adapter Protocol (DAP). Claude installs `dap` if missing (via Homebrew, installer script, or `go install`), then launches a debug session with `dap debug <file>` using auto-detected backend (Python, Go, Node.js/TypeScript, Rust, C/C++). It supports standard breakpoints, conditional breakpoints (e.g. `file:line:condition`), invariant breakpoints, `--stop-on-entry`, `--break-on-exception`, and attaching to remote processes or running PIDs. Navigation commands (`dap step`, `dap step in/out`, `dap continue`, `dap continue --to file:line`) return full context at each stop: current location, source, locals, call stack, and stdout/stderr. `dap eval` evaluates arbitrary expressions against the live process without stepping. The skill emphasizes a hypothesis-driven approach: form a falsifiable hypothesis, set targeted breakpoints, escalate from eval to stepping to conditional breaks, and trace causation up the call stack frame by frame.",
+    "use_when": [
+      "A program crashes or raises an exception whose source isn't obvious from reading code",
+      "Output is wrong and you need to observe actual variable values at runtime to find where",
+      "Debugging a loop or hot-path bug that requires conditional breakpoints to isolate",
+      "Tracing a multi-frame call stack to find where a value first becomes incorrect"
+    ],
+    "not_for": [
+      "Static analysis or code review (no runtime needed)",
+      "Bugs that are obvious from reading the source without running it"
+    ],
+    "combos": ["systematic-debugging → debugging-code → test-driven-development"],
+    "overlaps_with": [
+      "systematic-debugging (systematic-debugging is the structured methodology; debugging-code is the live runtime tool — use both together)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/debugging-code/SKILL.md"
+  },
+  {
+    "name": "brainstorming",
+    "category": "superpowers",
+    "tagline": "Turn vague ideas into approved specs before a single line of code is written",
+    "triggers": [
+      "Starting any creative work — new features, components, or behavior changes",
+      "Before entering plan mode or writing implementation code",
+      "User says 'let's build X' or 'add Y' or 'I want to create Z'",
+      "Any request to scaffold, generate, or modify functionality"
+    ],
+    "deep_dive": "The skill enforces a hard gate: no implementation until a design is approved. It starts by exploring project context (files, docs, recent commits), then asks clarifying questions one at a time (multiple-choice preferred), proposes 2-3 approaches with trade-offs, and presents the design section by section for incremental approval. After user sign-off, a spec is written to docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md, committed, self-reviewed for placeholders and contradictions, then handed back to the user for a final read. Only after that user review gate passes does the skill hand off to writing-plans — it never invokes any other implementation skill. A just-in-time visual companion (browser mockups/diagrams) may be offered the first time a question would genuinely be clearer shown than told.",
+    "use_when": [
+      "About to add a new feature or component to an existing codebase",
+      "Starting a greenfield project or sub-system from scratch",
+      "A request feels 'simple' but hasn't been examined for hidden assumptions",
+      "Multiple independent subsystems need to be decomposed before work begins"
+    ],
+    "not_for": [
+      "Pure bug fixes where root cause is already known (use systematic-debugging instead)",
+      "Executing an already-approved spec or plan (use writing-plans / executing-plans)",
+      "Answering conceptual questions that don't lead to implementation"
+    ],
+    "combos": ["brainstorming → writing-plans → subagent-driven-development → code-review"],
+    "overlaps_with": [
+      "grill-me (grill-me interrogates the user about a plan; brainstorming proposes design options — grill-me first when intent is vague)"
+    ],
+    "usage": "often",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/brainstorming/SKILL.md"
+  },
+  {
+    "name": "dispatching-parallel-agents",
+    "category": "superpowers",
+    "tagline": "Solve multiple independent failures concurrently by dispatching one focused agent per domain",
+    "triggers": [
+      "3+ test files failing with clearly different root causes",
+      "Multiple independent subsystems broken at the same time",
+      "Sequential investigation of unrelated problems is clearly wasteful",
+      "After major refactoring that broke several isolated areas"
+    ],
+    "deep_dive": "The skill groups failures by independent problem domain (e.g., abort logic, batch completion, race conditions) and dispatches one general-purpose subagent per domain in the same response — issuing multiple Agent tool calls in a single message so they execute concurrently. Each agent receives a self-contained prompt: specific test file/scope, the exact failing test names and error messages, a clear goal, constraints on what not to touch, and an expected output format. After all agents return, the controller reads each summary, checks for conflicting edits to shared files, runs the full test suite to verify fixes integrate cleanly, and spot-checks for systematic errors agents can make. The pattern only applies when failures are genuinely independent; if fixing one might fix others, investigate together first.",
+    "use_when": [
+      "3+ test files failing with different root causes after a large refactor",
+      "Multiple independent subsystems broken and each can be understood without context from the others",
+      "You want to parallelize investigation to reduce wall-clock debugging time",
+      "Each problem domain has no shared state with the others"
+    ],
+    "not_for": [
+      "Related failures where fixing one might fix others (investigate together first)",
+      "Exploratory debugging where you don't yet know what's broken",
+      "Tasks where agents would edit the same files and create merge conflicts"
+    ],
+    "combos": ["systematic-debugging → dispatching-parallel-agents"],
+    "overlaps_with": [
+      "subagent-driven-development (dispatching-parallel-agents for parallel debugging; subagent-driven-development for sequential plan execution)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/dispatching-parallel-agents/SKILL.md"
+  },
+  {
+    "name": "executing-plans",
+    "category": "superpowers",
+    "tagline": "Load a written plan and execute every task in sequence with hard stops on blockers",
+    "triggers": [
+      "A written implementation plan file exists and needs to be run in a separate/new session",
+      "User says 'execute the plan' or 'implement this plan' outside the session that wrote it",
+      "Subagent support is unavailable and subagent-driven-development cannot be used",
+      "Inline batch execution with human-in-loop checkpoints is preferred"
+    ],
+    "deep_dive": "The skill opens by announcing its use, then reads and critically reviews the plan file — raising questions or concerns with the human partner before any implementation begins. It creates todos for every plan item and works through them in order: mark in_progress, follow each bite-sized step exactly, run the specified verifications, mark completed. It stops immediately on any blocker (missing dependency, failing test, unclear instruction) and asks for clarification rather than guessing. After all tasks complete and are verified, it hands off to finishing-a-development-branch, which verifies tests, detects the git environment, and presents structured merge/PR/keep/discard options. It explicitly defers to subagent-driven-development when subagent support is available, as that path produces higher quality.",
+    "use_when": [
+      "Running an existing plan file in a fresh parallel session",
+      "Subagent support is not available on the current platform",
+      "User prefers checkpoint-based inline execution over subagent dispatch",
+      "Continuing execution of a plan after a session handoff"
+    ],
+    "not_for": [
+      "The same session that just wrote the plan (use subagent-driven-development for that)",
+      "Tasks without a written plan (use brainstorming + writing-plans first)",
+      "Situations where subagents are available (subagent-driven-development is recommended instead)"
+    ],
+    "combos": ["writing-plans → executing-plans → finishing-a-development-branch"],
+    "overlaps_with": [
+      "subagent-driven-development (executing-plans for sequential inline execution; subagent-driven-development for higher-quality parallel subagent execution)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/executing-plans/SKILL.md"
+  },
+  {
+    "name": "finishing-a-development-branch",
+    "category": "superpowers",
+    "tagline": "Gate implementation completion behind test verification, then present merge/PR/keep/discard options",
+    "triggers": [
+      "All plan tasks are marked complete and verified",
+      "Implementation is done and it's time to integrate the work",
+      "Called by executing-plans or subagent-driven-development as a required sub-skill",
+      "User says 'I'm done with this feature, what should I do now?'"
+    ],
+    "deep_dive": "The skill begins by running the full test suite; if tests fail it stops and refuses to present integration options until they pass. Then it detects the git environment by comparing GIT_DIR and GIT_COMMON to distinguish a normal repo, a named-branch worktree (superpowers-created), or a detached HEAD (harness-managed). Based on environment, it presents exactly 4 options (merge locally, push + PR, keep as-is, discard) or 3 for detached HEAD. Each option has precise execution steps: merge locally runs tests on the merged result before any cleanup; push + PR preserves the worktree for PR iteration; discard requires the user to type 'discard' as confirmation. Worktree cleanup only runs for options 1 and 4, and only for worktrees the skill itself created (under .worktrees/ or worktrees/) — harness-owned workspaces are never removed.",
+    "use_when": [
+      "All implementation tasks are complete and tests pass",
+      "At the end of executing-plans or subagent-driven-development",
+      "Deciding how to integrate feature branch work (merge, PR, or abandon)",
+      "Working in a git worktree that needs cleanup after merge"
+    ],
+    "not_for": [
+      "Starting implementation (use brainstorming + writing-plans)",
+      "Ongoing development where tasks are still incomplete",
+      "Skipping test verification before merge — the skill enforces this gate"
+    ],
+    "combos": ["subagent-driven-development → finishing-a-development-branch"],
+    "overlaps_with": [],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/finishing-a-development-branch/SKILL.md"
+  },
+  {
+    "name": "receiving-code-review",
+    "category": "superpowers",
+    "tagline": "Evaluate code review feedback with technical rigor — verify before implementing, push back when wrong",
+    "triggers": [
+      "Receiving feedback from an external reviewer or automated review tool",
+      "Human partner shares a list of review comments to address",
+      "About to implement reviewer suggestions without fully understanding them",
+      "Reviewer feedback seems technically questionable or lacks full context"
+    ],
+    "deep_dive": "The skill enforces a six-step response pattern: read all feedback completely before reacting, restate each requirement in your own words (or ask), verify it against codebase reality, evaluate technical soundness for this specific codebase, respond with technical acknowledgment or reasoned pushback, then implement one item at a time and test each. If any item is unclear, the skill hard-stops before implementing anything — partial understanding leads to wrong implementation. For external reviewer feedback, it applies a skepticism checklist: does this break existing functionality, does the reviewer have full context, are there legacy/compatibility reasons for the current code, does it violate YAGNI? Performative agreement ('You're absolutely right!', 'Great point!') is explicitly forbidden; so is any expression of gratitude. Correct feedback is acknowledged with actions, not words.",
+    "use_when": [
+      "Processing a GitHub PR review with multiple line comments",
+      "Human partner delivers a numbered list of review items",
+      "An external reviewer suggests changes that seem to conflict with project decisions",
+      "You feel social pressure to agree with feedback without verifying it"
+    ],
+    "not_for": [
+      "Requesting a review (use requesting-code-review instead)",
+      "Implementing features from scratch (use brainstorming + TDD)",
+      "Automated linter/formatter output that requires no judgment (just fix and move on)"
+    ],
+    "combos": ["requesting-code-review → receiving-code-review"],
+    "overlaps_with": [
+      "requesting-code-review (requesting dispatches the reviewer; receiving processes the feedback — sequential pair)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/receiving-code-review/SKILL.md"
+  },
+  {
+    "name": "requesting-code-review",
+    "category": "superpowers",
+    "tagline": "Dispatch a focused code-reviewer subagent after each task to catch issues before they compound",
+    "triggers": [
+      "Completing a task in subagent-driven-development (mandatory after each task)",
+      "Finishing a major feature before merging to main",
+      "Stuck on a problem and wanting a fresh perspective",
+      "After fixing a complex bug to verify the fix is correct"
+    ],
+    "deep_dive": "The skill works by dispatching a fresh general-purpose subagent using the code-reviewer.md template, giving it precisely crafted context (description of what was built, requirements/plan, BASE_SHA, HEAD_SHA) without exposing the controller's session history. The subagent evaluates the diff and returns findings categorized as Critical, Important, or Minor. The controller then acts: Critical issues are fixed immediately, Important issues are fixed before moving on, Minor issues are logged for later. The reviewer's diff is packaged via the review-package script (which writes it to a file so the reviewer reads one file rather than deriving the diff itself). In subagent-driven-development, this review is mandatory after every task to catch issues before they cascade into later work.",
+    "use_when": [
+      "After each completed task in subagent-driven-development",
+      "Before merging any feature branch to main",
+      "After completing a significant standalone feature",
+      "After fixing a subtle or multi-file bug"
+    ],
+    "not_for": [
+      "Receiving and processing review feedback (use receiving-code-review for that)",
+      "Trivial single-line changes with no logic impact",
+      "Skipping review because the change 'seems simple' — that's a red flag"
+    ],
+    "combos": ["subagent-driven-development → requesting-code-review → receiving-code-review"],
+    "overlaps_with": [
+      "code-review builtin (requesting-code-review dispatches a subagent reviewer; code-review builtin reviews the current diff directly)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/requesting-code-review/SKILL.md"
+  },
+  {
+    "name": "subagent-driven-development",
+    "category": "superpowers",
+    "tagline": "Execute an implementation plan task-by-task using fresh subagents with dual-stage review gates",
+    "triggers": [
+      "A written implementation plan exists and tasks are mostly independent",
+      "User says 'implement the plan' or chooses subagent-driven execution after writing-plans",
+      "High-quality implementation is needed with spec compliance + code quality gates",
+      "Staying in the current session rather than handing off to a new parallel session"
+    ],
+    "deep_dive": "The skill reads the plan once, scans for cross-task conflicts, creates todos for all tasks, then enters a tight per-task loop: run task-brief to extract the task text to a file, dispatch a fresh implementer subagent with the brief path + report path + cross-task context (never the full plan), wait for status (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED), generate a review package via review-package script, dispatch a task reviewer subagent with the brief, report, and diff package. The task reviewer must return two verdicts: spec compliance and code quality. Any Critical/Important findings trigger a fix subagent, then re-review. Only when both verdicts pass is the task marked complete in the durable progress ledger (a file under .git/sdd/). After all tasks complete, a final whole-branch reviewer runs on the full branch diff; then finishing-a-development-branch handles merge/PR options. Model selection is explicit per dispatch: cheapest for mechanical 1-2 file tasks, standard for integration, most capable for architecture and final review.",
+    "use_when": [
+      "Executing a multi-task implementation plan in the current session",
+      "High-quality output is needed with spec compliance guaranteed at each step",
+      "Tasks are independently implementable with defined interfaces between them",
+      "Previous sessions used the progress ledger and execution needs to resume"
+    ],
+    "not_for": [
+      "Plans with tightly coupled tasks where each depends on the previous output (use executing-plans)",
+      "Situations without subagent support (use executing-plans instead)",
+      "Ad-hoc changes without a written plan (use brainstorming first)"
+    ],
+    "combos": ["brainstorming → writing-plans → subagent-driven-development → finishing-a-development-branch"],
+    "overlaps_with": [
+      "executing-plans (subagent-driven-development for parallel high-quality execution; executing-plans for sequential inline execution without subagents)"
+    ],
+    "usage": "often",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/subagent-driven-development/SKILL.md"
+  },
+  {
+    "name": "systematic-debugging",
+    "category": "superpowers",
+    "tagline": "Find root cause before fixing anything — four structured phases, no guessing allowed",
+    "triggers": [
+      "Any bug, test failure, or unexpected behavior",
+      "About to propose a fix before fully understanding the cause",
+      "Previous fix attempts didn't work (especially after 2+)",
+      "Under time pressure where guessing is tempting"
+    ],
+    "deep_dive": "The skill imposes an iron law: no fixes without completing Phase 1 (root cause investigation). Phase 1 requires reading error messages completely, reproducing the issue consistently, checking recent git changes, adding diagnostic instrumentation at each component boundary in multi-layer systems, and tracing the data flow backwards through the call stack to find the original source. Phase 2 finds working examples in the same codebase and identifies every difference between working and broken. Phase 3 forms a single specific hypothesis, tests it with the smallest possible change, and either advances to Phase 4 or forms a new hypothesis — never stacking fixes. Phase 4 creates a failing test case first (via TDD skill), implements the single root-cause fix, and verifies no regressions. If 3+ fixes have failed, the skill mandates stopping to question the architecture with the human partner rather than attempting a fourth fix.",
+    "use_when": [
+      "Any test failure, production bug, or unexpected behavior, no matter how simple it seems",
+      "Multiple previous fix attempts have not resolved the issue",
+      "Emergency situations where guessing feels faster (systematic is actually faster)",
+      "A bug manifests deep in a call stack or across multiple system layers"
+    ],
+    "not_for": [
+      "Known-cause fixes where root cause is already confirmed (go straight to TDD phase 4)",
+      "Performance profiling (different discipline, though phases 1-2 overlap)",
+      "Skipping the process because the bug 'seems obvious' — that's a red flag"
+    ],
+    "combos": ["systematic-debugging → test-driven-development", "systematic-debugging → debugging-code"],
+    "overlaps_with": [
+      "debugging-code (systematic-debugging is the methodology; debugging-code is the DAP runtime tool — use both)"
+    ],
+    "usage": "often",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/systematic-debugging/SKILL.md"
+  },
+  {
+    "name": "test-driven-development",
+    "category": "superpowers",
+    "tagline": "Write the failing test first, watch it fail, then write only enough code to make it pass",
+    "triggers": [
+      "Implementing any new feature, behavior change, or refactor",
+      "Fixing a bug (write the failing reproduction test first)",
+      "Before writing any production code for a task",
+      "Subagent implementers follow this as a required sub-skill"
+    ],
+    "deep_dive": "The skill enforces the Red-Green-Refactor cycle as an iron law with no exceptions: write one minimal failing test for one behavior, run it and confirm it fails for the right reason (missing feature, not a typo), write the smallest possible implementation to pass it, confirm all tests pass with pristine output, then refactor without adding behavior. If code was written before the test, the skill requires deleting it completely — not keeping it as 'reference' or adapting it while writing tests. Rationalization tables and red flags are built into the skill to counter every known excuse ('too simple', 'I'll test after', 'deleting is wasteful', 'tests after achieve the same goals'). Tests must use real code rather than mocks where possible; a test that passes immediately means it tests existing behavior and must be fixed before continuing.",
+    "use_when": [
+      "Implementing any new feature or API endpoint",
+      "Fixing a bug (write the failing test reproducing it first)",
+      "Refactoring existing code that needs test coverage",
+      "Subagent implementers working on individual plan tasks"
+    ],
+    "not_for": [
+      "Throwaway prototypes (ask human partner first)",
+      "Generated or configuration files with no testable logic",
+      "Skipping because the feature 'seems simple' — that reasoning is explicitly countered by the skill"
+    ],
+    "combos": ["systematic-debugging → test-driven-development", "brainstorming → writing-plans → test-driven-development"],
+    "overlaps_with": [],
+    "usage": "often",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/test-driven-development/SKILL.md"
+  },
+  {
+    "name": "using-git-worktrees",
+    "category": "superpowers",
+    "tagline": "Detect existing workspace isolation, prefer native tools, fall back to git worktree with safety checks",
+    "triggers": [
+      "Starting feature work that should be isolated from the current branch",
+      "Before executing an implementation plan (called by subagent-driven-development and executing-plans)",
+      "User asks to 'set up a worktree' or 'work in isolation'",
+      "About to implement on a branch that must stay clean"
+    ],
+    "deep_dive": "The skill begins with a mandatory Step 0 detection: compare GIT_DIR and GIT_COMMON to determine if already in a linked worktree (including a submodule guard). If isolation already exists, it skips creation entirely. If not, it asks for user consent before creating anything. Step 1a checks for a native worktree tool (EnterWorktree, /worktree command, --worktree flag) and uses it if available — using git worktree add when a native tool exists is the #1 mistake. Step 1b (git fallback) follows a strict directory-priority order: explicit user preference > existing .worktrees/ or worktrees/ > default .worktrees/, always verifying the directory is .gitignored before creating. Step 2 auto-detects and runs project setup (npm install, pip install, etc.). Step 3 runs the baseline test suite; failing tests trigger a report and a confirmation gate before proceeding.",
+    "use_when": [
+      "Starting feature implementation that must not affect the main branch",
+      "Executing a plan that requires an isolated workspace",
+      "Multiple features need to be worked on in parallel in separate worktrees",
+      "Platform does not provide native isolation and manual git worktrees are needed"
+    ],
+    "not_for": [
+      "Quick one-line fixes where isolation overhead isn't worth it (user's call)",
+      "Environments where sandbox permissions block git worktree add (skill handles graceful fallback)",
+      "Creating a second worktree when Step 0 already detects one exists"
+    ],
+    "combos": ["using-git-worktrees → subagent-driven-development"],
+    "overlaps_with": [],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/using-git-worktrees/SKILL.md"
+  },
+  {
+    "name": "using-superpowers",
+    "category": "superpowers",
+    "tagline": "Bootstrap skill discipline: invoke the right skill before any response, even clarifying questions",
+    "triggers": [
+      "Start of any conversation (establishes the invoke-first rule for all subsequent turns)",
+      "Any user message arrives — check for applicable skill before responding",
+      "About to enter plan mode — ensure brainstorming ran first",
+      "Any thought beginning with 'this is too simple to need a skill'"
+    ],
+    "deep_dive": "This is the meta-skill that governs all other skill usage. Its core rule is that any skill with even a 1% chance of applying must be invoked before any response or action, including clarifying questions. It establishes a skill priority order: process skills (brainstorming, systematic-debugging) come before implementation skills. When a skill is invoked, the agent announces it, creates a todo per checklist item if a checklist exists, and follows the skill exactly. The skill classifies skills as Rigid (TDD, systematic-debugging — follow exactly) or Flexible (patterns — adapt to context). It is explicitly tagged to skip for subagents dispatched to execute specific tasks, and defers to user instructions (CLAUDE.md, AGENTS.md) over skill content when they conflict. A rationalization table covers every common excuse for skipping skill checks.",
+    "use_when": [
+      "At the start of every new conversation to establish skill discipline",
+      "When unsure whether a skill applies to a given request",
+      "Any time you notice yourself about to respond without checking for applicable skills",
+      "When a request feels like it 'doesn't need a formal skill'"
+    ],
+    "not_for": [
+      "Subagents dispatched to execute a specific task (they skip this skill per its own SUBAGENT-STOP tag)",
+      "Overriding explicit user instructions in CLAUDE.md or AGENTS.md",
+      "Reading skill files manually with file tools (use the platform's Skill tool instead)"
+    ],
+    "combos": [],
+    "overlaps_with": [],
+    "usage": "unrated",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/using-superpowers/SKILL.md"
+  },
+  {
+    "name": "verification-before-completion",
+    "category": "superpowers",
+    "tagline": "Run the verification command and read its output before making any claim of success or completion",
+    "triggers": [
+      "About to say tests pass, build succeeds, or bug is fixed",
+      "About to commit, push, or create a PR",
+      "About to mark a task complete or move to the next one",
+      "Trusting an agent's success report without independent confirmation"
+    ],
+    "deep_dive": "The skill enforces a five-step gate function that must run before any completion claim or expression of satisfaction: identify what command proves the claim, execute it fresh and in full, read the complete output and check the exit code, verify the output actually confirms the claim, and only then make the statement. It explicitly forbids words like 'should', 'probably', 'seems to', and any expression of satisfaction ('Done!', 'Great!', 'Perfect!') before verification has run. For regression tests it requires the full red-green cycle: write the test, confirm it passes, revert the fix to confirm it fails, restore the fix and confirm it passes again. For agent delegation it requires checking the VCS diff to confirm changes actually exist before trusting the agent's report. The skill frames unverified completion claims as dishonesty, not efficiency.",
+    "use_when": [
+      "Before any claim that tests pass, build succeeds, or requirements are met",
+      "Before committing, creating a PR, or marking a task complete",
+      "After delegating work to a subagent and receiving a success report",
+      "When tired or under pressure and tempted to skip a verification run"
+    ],
+    "not_for": [
+      "Mid-implementation work where no completion claim is being made",
+      "Research or exploration tasks with no testable output",
+      "Replacing the actual fix — verification confirms the fix, not substitutes for it"
+    ],
+    "combos": ["test-driven-development → verification-before-completion"],
+    "overlaps_with": [
+      "verify builtin (verification-before-completion is a discipline rule for any task; verify builtin runs the actual app to observe behavior)"
+    ],
+    "usage": "often",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/verification-before-completion/SKILL.md"
+  },
+  {
+    "name": "writing-plans",
+    "category": "superpowers",
+    "tagline": "Write a zero-ambiguity implementation plan with exact code, paths, and commands for each task",
+    "triggers": [
+      "An approved spec or design doc exists and needs to become executable steps",
+      "brainstorming has completed and handed off to this skill",
+      "User says 'write the implementation plan' or 'plan this out'",
+      "Before any implementation begins on a multi-step feature"
+    ],
+    "deep_dive": "The skill starts by checking scope: if the spec covers multiple independent subsystems it suggests decomposition into separate plans. It then maps the file structure before writing any tasks, locking in decomposition decisions. Each task is sized as the smallest unit that carries its own test cycle and could be meaningfully accepted or rejected by a reviewer. Task steps are written at 2-5 minute granularity (write failing test, run it, implement minimal code, run again, commit), with complete code blocks in every step that touches code — no placeholders, TBD, or 'similar to Task N' cross-references. A mandatory plan header includes goal, architecture, tech stack, and a Global Constraints section with exact verbatim values from the spec. After writing, the skill runs a self-review: spec coverage check, placeholder scan, and type/signature consistency check across tasks. It then offers execution choice: subagent-driven (recommended, dispatches subagent-driven-development) or inline (dispatches executing-plans).",
+    "use_when": [
+      "After brainstorming produces an approved spec that needs an implementation roadmap",
+      "A spec or set of requirements exists and implementation is about to begin",
+      "Breaking a large feature into independently reviewable, testable tasks",
+      "Handing work to a subagent-driven-development or executing-plans execution flow"
+    ],
+    "not_for": [
+      "Writing a plan before brainstorming — design must be approved first",
+      "Single-step changes that don't need multi-task decomposition",
+      "Producing vague high-level roadmaps — every step must have exact code and commands"
+    ],
+    "combos": ["brainstorming → writing-plans → subagent-driven-development → code-review"],
+    "overlaps_with": [],
+    "usage": "often",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/writing-plans/SKILL.md"
+  },
+  {
+    "name": "writing-skills",
+    "category": "superpowers",
+    "tagline": "Apply TDD to process documentation — baseline a failing agent, write the skill, verify compliance",
+    "triggers": [
+      "Creating a new skill or editing an existing one",
+      "A technique proved valuable in a session and should be captured for reuse",
+      "A skill isn't producing the intended agent behavior and needs improvement",
+      "Verifying a skill works before deploying it"
+    ],
+    "deep_dive": "The skill maps TDD concepts directly to documentation: baseline pressure scenarios are the failing tests, the SKILL.md is the production code, and agent compliance under adversarial pressure is the green pass. The iron law applies: no skill without a failing baseline first — run pressure scenarios without the skill and document exact rationalizations the agent uses. Then write the minimal skill addressing those specific failures (GREEN), test it, and refactor by closing newly discovered loopholes (REFACTOR). The skill includes a 'Match the Form to the Failure' table that prescribes prohibition+rationalization-tables for discipline failures, positive recipe/output contracts for wrong-shaped output, structural required-field templates for omitted elements, and conditional predicates for context-dependent behavior. SDO guidance covers description fields (triggering conditions only, never workflow summaries), keyword coverage, naming conventions, and token efficiency targets. A full creation checklist with RED/GREEN/REFACTOR phases and quality checks must be completed before deployment.",
+    "use_when": [
+      "Capturing a technique or pattern that proved non-obvious in a real session",
+      "An existing skill isn't working — agents are rationalizing around it",
+      "Creating a new domain-specific or cross-project reusable skill",
+      "Editing skill content and needing to verify behavior didn't regress"
+    ],
+    "not_for": [
+      "Project-specific conventions that only apply to one codebase (put in instructions file instead)",
+      "Standard practices already well-documented elsewhere",
+      "One-off solutions that won't be reused across projects"
+    ],
+    "combos": ["skill-creator → skill-check → writing-skills"],
+    "overlaps_with": [
+      "skill-creator (writing-skills for TDD discipline in authoring; skill-creator for full eval-driven development loop)"
+    ],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/plugins/cache/claude-plugins-official/superpowers/6.0.2/skills/writing-skills/SKILL.md"
+  },
+  {
+    "name": "frontend-design",
+    "category": "superpowers",
+    "tagline": "Create distinctive, production-grade frontend interfaces that avoid generic AI aesthetics",
+    "triggers": [
+      "build a web component, page, or frontend app",
+      "create a UI with high design quality",
+      "design a landing page, dashboard, or web interface",
+      "make this look polished and not like generic AI output"
+    ],
+    "deep_dive": "The skill guides Claude to produce creative, production-grade frontend code by enforcing a design-first mindset before touching implementation. It starts by identifying the visual language (typography pairing, color palette, spacing system, motion principles) before writing any component code. Output targets real deployed web apps rather than claude.ai artifacts. The skill explicitly prohibits default aesthetic patterns associated with AI-generated UIs: purple/blue gradients, rounded-everything cards, Inter font with gray text, centered hero sections with vague taglines, and glass-morphism overlays. Instead it pushes toward strong typographic hierarchy, intentional whitespace, brand-specific color, and component-level animation. Works with any stack (React, Vue, plain HTML+CSS) and adapts design direction to project context — startup landing page vs. data dashboard vs. documentation site each get different visual treatment.",
+    "use_when": [
+      "Building a web component, page, or full frontend app where design quality matters",
+      "Existing UI feels generic or 'AI-generated' and needs a distinctive visual identity",
+      "Starting a new product's visual language from scratch",
+      "Generating polished frontend code that a designer would not immediately revamp"
+    ],
+    "not_for": [
+      "Backend-only or API work with no UI surface",
+      "CLI tools or terminal UIs (different aesthetic constraints)",
+      "claude.ai artifact bundles (use web-artifacts-builder for that)"
+    ],
+    "combos": ["brainstorming → frontend-design → webapp-testing"],
+    "overlaps_with": [
+      "web-artifacts-builder (frontend-design for deployed apps; web-artifacts-builder for self-contained claude.ai artifact bundles)"
+    ],
+    "usage": "sometimes",
+    "source": "harness skill def"
+  },
+  {
     "name": "deep-research",
     "category": "builtin",
-    "tagline": "Fan-out web research with cited report",
-    "triggers": ["/deep-research", "ask for a researched report"],
-    "deep_dive": "Fans out web searches, fetches sources, adversarially verifies claims, synthesizes a cited report.",
-    "use_when": ["multi-source fact-checked research"],
-    "not_for": ["library API docs (use context7)"],
-    "combos": ["graphify → deep-research"],
-    "overlaps_with": ["paper-search (academic only), context7 (library docs)"],
+    "tagline": "Fan-out web research harness with adversarial verification and a cited synthesis report",
+    "triggers": [
+      "/deep-research",
+      "research X thoroughly with multiple sources",
+      "get me a fact-checked report on [topic]",
+      "find and verify information from multiple web sources"
+    ],
+    "deep_dive": "Spawns parallel web searches across multiple query angles, fetches and reads each source in full, then adversarially verifies claims by cross-referencing conflicting sources. After verification, synthesizes a cited report with inline references. The harness asks 2-3 clarifying questions before starting if the topic is underspecified (e.g., 'what car to buy' without budget or region). Each claim in the final report traces back to at least one source URL. The tool is optimized for breadth-first coverage of a topic with skeptical evaluation of each source — not a single-source summarizer.",
+    "use_when": [
+      "Researching a topic that requires multiple independent web sources",
+      "Verifying a claim by checking it against several references",
+      "Producing a report with inline citations for publication or decision-making",
+      "Investigating a topic where conflicting information exists online"
+    ],
+    "not_for": [
+      "Library/SDK/API documentation (use context7 instead)",
+      "Peer-reviewed academic literature (use paper-search for proper citation metadata)",
+      "Quick single-fact lookups that don't need multi-source verification"
+    ],
+    "combos": ["graphify → deep-research", "paper-search → deep-research"],
+    "overlaps_with": [
+      "paper-search (deep-research for broad web sources; paper-search for peer-reviewed academic literature only)",
+      "context7 (deep-research for general web; context7 for current library/SDK docs specifically)"
+    ],
+    "usage": "sometimes",
+    "source": "built-in def"
+  },
+  {
+    "name": "code-review",
+    "category": "builtin",
+    "tagline": "Review the current git diff for bugs and quality issues at configurable effort levels",
+    "triggers": [
+      "/code-review",
+      "review this diff for bugs",
+      "check my changes for correctness and cleanup opportunities",
+      "post inline PR review comments on my changes"
+    ],
+    "deep_dive": "Reviews the current git diff for correctness bugs and reuse/simplification/efficiency cleanups at a specified effort level: low/medium returns fewer high-confidence findings; high/max broadens coverage and may include uncertain findings; ultra runs a deep multi-agent cloud review. The `--comment` flag posts findings as inline GitHub PR comments; `--fix` applies the findings directly to the working tree. Effort level controls how deep the review goes — low is fast feedback, ultra is exhaustive. The skill focuses on what changed, not the whole codebase.",
+    "use_when": [
+      "Before merging a feature branch to catch bugs while changes are fresh",
+      "Wanting inline PR comments automatically posted to GitHub",
+      "After a large refactor to verify no regressions were introduced",
+      "Needing a thorough multi-agent cloud review for high-stakes changes"
+    ],
+    "not_for": [
+      "Security-focused review (use security-review instead)",
+      "Cleanup-only review with no bug hunting (use simplify instead)",
+      "Reviewing a full PR from scratch without a local diff (use review instead)"
+    ],
+    "combos": ["brainstorming → writing-plans → test-driven-development → code-review"],
+    "overlaps_with": [
+      "simplify (code-review hunts bugs AND cleanups; simplify is cleanup-only — no bug hunting)",
+      "review (code-review reviews a local diff; review reviews a full pull request)",
+      "security-review (code-review for general quality; security-review for security-specific analysis)"
+    ],
+    "usage": "often",
+    "source": "built-in def"
+  },
+  {
+    "name": "simplify",
+    "category": "builtin",
+    "tagline": "Reuse, simplify, and efficiency-clean changed code — quality only, no bug hunting",
+    "triggers": [
+      "/simplify",
+      "clean up this code",
+      "find simplification and efficiency opportunities in my changes",
+      "reduce complexity in the changed files"
+    ],
+    "deep_dive": "Reviews changed code for reuse/simplification/efficiency/altitude cleanups and applies the fixes immediately. Unlike code-review, simplify is purely about code quality — it does not look for correctness bugs. Altitude cleanups means raising the level of abstraction where appropriate (e.g., extracting a repeated pattern into a helper). The skill applies fixes directly to the working tree without requiring a separate `--fix` flag. Best used after a feature is working and tests pass, as a final polish pass before committing.",
+    "use_when": [
+      "After a feature is working and tests pass, before the final commit",
+      "Reducing duplication and improving readability in recently changed files",
+      "Raising abstraction level on a working implementation",
+      "Quick cleanup pass that doesn't need deep bug analysis"
+    ],
+    "not_for": [
+      "Finding correctness bugs or logic errors (use code-review for that)",
+      "Reviewing a full pull request (use review instead)",
+      "Security analysis (use security-review instead)"
+    ],
+    "combos": ["code-review → simplify"],
+    "overlaps_with": [
+      "code-review (simplify is cleanup-only; code-review also hunts bugs — run code-review first, then simplify)",
+      "review (simplify cleans local changes; review reviews a full PR)"
+    ],
+    "usage": "sometimes",
+    "source": "built-in def"
+  },
+  {
+    "name": "review",
+    "category": "builtin",
+    "tagline": "Review a pull request end-to-end",
+    "triggers": [
+      "/review",
+      "review this PR",
+      "look at this pull request",
+      "give me feedback on this pull request"
+    ],
+    "deep_dive": "Reviews a pull request in full — reads the PR description, all changed files, and the diff, then provides structured feedback covering correctness, design, test coverage, and documentation. Unlike code-review (which operates on a local diff), review works on a GitHub PR URL or the current branch's open PR. Output is a structured review report with findings by severity. Can be combined with `--comment` to post feedback inline on the PR. Intended for the reviewer role, not the author.",
+    "use_when": [
+      "Reviewing a teammate's pull request before approving it",
+      "Getting a holistic view of a PR including description, tests, and code changes together",
+      "Acting as a code reviewer without a local checkout of the branch"
+    ],
+    "not_for": [
+      "Reviewing your own local uncommitted diff (use code-review for that)",
+      "Security-focused review (use security-review instead)",
+      "Cleanup-only review (use simplify instead)"
+    ],
+    "combos": ["requesting-code-review → review"],
+    "overlaps_with": [
+      "code-review (review for a full GitHub PR; code-review for the local git diff)",
+      "security-review (review for general quality; security-review for security-specific analysis)"
+    ],
+    "usage": "sometimes",
+    "source": "built-in def"
+  },
+  {
+    "name": "security-review",
+    "category": "builtin",
+    "tagline": "Security-focused review of pending changes on the current branch",
+    "triggers": [
+      "/security-review",
+      "check my changes for security issues",
+      "security audit of this branch",
+      "find vulnerabilities in these changes"
+    ],
+    "deep_dive": "Performs a security-focused review of all pending changes on the current branch. Looks for injection vulnerabilities (SQL, command, XSS), insecure direct object references, authentication/authorization gaps, secrets hardcoded in source, use of deprecated/insecure APIs, and unsafe deserialization. Output is a prioritized list of security findings with severity (Critical/High/Medium/Low) and remediation guidance. Scoped to the diff, not the entire codebase — if a pre-existing vulnerability is not touched by the diff, it may not appear.",
+    "use_when": [
+      "Before merging changes that touch authentication, authorization, or data handling",
+      "Reviewing changes that accept user input or call external services",
+      "Ensuring no secrets or credentials were accidentally committed",
+      "Pre-release security gate on a feature branch"
+    ],
+    "not_for": [
+      "General code quality review (use code-review or simplify instead)",
+      "Full codebase security audit (scoped to the current branch diff)",
+      "Penetration testing or runtime vulnerability scanning"
+    ],
+    "combos": ["code-review → security-review"],
+    "overlaps_with": [
+      "code-review (security-review for security-specific findings; code-review for general bugs + quality)",
+      "review (security-review for security focus; review for general PR review)"
+    ],
+    "usage": "sometimes",
+    "source": "built-in def"
+  },
+  {
+    "name": "verify",
+    "category": "builtin",
+    "tagline": "Verify a code change actually works by running the app and observing real behavior",
+    "triggers": [
+      "/verify",
+      "verify this change works",
+      "confirm this fix works in the real app",
+      "check that this feature works by running it"
+    ],
+    "deep_dive": "Launches and drives the project's app to manually validate that a specific change produces the expected behavior — not just that tests pass. First looks for a project-specific skill that covers launching the app; otherwise uses built-in patterns per project type (CLI, server, TUI, Electron, browser-driven, library). The skill takes a screenshot or captures output at the relevant state and compares it to the expected behavior. Distinct from tests: verify observes the running app as a user would, catching integration issues that unit tests miss.",
+    "use_when": [
+      "Confirming a bug fix works end-to-end in the running app, not just in tests",
+      "Validating a new UI feature looks and behaves correctly",
+      "Checking that a third-party integration actually works at runtime",
+      "Before creating a PR to make sure the change is shippable"
+    ],
+    "not_for": [
+      "Unit or integration testing (use test-driven-development instead)",
+      "Code quality review (use code-review or simplify instead)",
+      "Changes that have no observable runtime behavior (pure refactors confirmed by tests)"
+    ],
+    "combos": ["test-driven-development → verify → code-review"],
+    "overlaps_with": [
+      "run (verify confirms a specific change works; run just launches the app to see it running)",
+      "webapp-testing (verify is a quick manual check; webapp-testing automates browser flows with scripts)"
+    ],
+    "usage": "sometimes",
+    "source": "built-in def"
+  },
+  {
+    "name": "run",
+    "category": "builtin",
+    "tagline": "Launch and drive the project's app to see a change working in the real environment",
+    "triggers": [
+      "/run",
+      "run the app",
+      "start the project",
+      "show me the app running"
+    ],
+    "deep_dive": "Launches and drives the project's app using the best available method: first checks for a project-specific skill that covers launching (e.g., a custom `run` skill), then falls back to built-in patterns per project type (CLI: run directly; server: start and open browser; TUI: capture terminal output; Electron: launch Electron; browser-driven: open in browser). For servers, it waits for the process to report readiness before proceeding. Takes a screenshot or captures output to confirm the app is running. Handles common startup issues (port conflicts, missing env vars) by reporting them clearly.",
+    "use_when": [
+      "Launching the project to see it running for the first time or after a change",
+      "Taking a screenshot of the app at a specific state for review",
+      "Confirming the development server starts without errors",
+      "Demoing the app state before and after a change"
+    ],
+    "not_for": [
+      "Running tests (use test-driven-development or the test command directly)",
+      "Verifying a specific bug fix end-to-end (use verify for that)",
+      "Production deployments (use Vercel MCP or project-specific deploy scripts)"
+    ],
+    "combos": ["frontend-design → run → verify"],
+    "overlaps_with": [
+      "verify (run just starts the app; verify confirms a specific change works correctly)",
+      "webapp-testing (run launches manually; webapp-testing automates multi-step browser flows)"
+    ],
+    "usage": "sometimes",
+    "source": "built-in def"
+  },
+  {
+    "name": "init",
+    "category": "builtin",
+    "tagline": "Initialize a new CLAUDE.md that documents the codebase for future sessions",
+    "triggers": [
+      "/init",
+      "initialize CLAUDE.md",
+      "create a CLAUDE.md for this project",
+      "document this codebase for Claude"
+    ],
+    "deep_dive": "Reads the project structure, key files, package manifests, test setup, and any existing documentation to produce a CLAUDE.md that gives Claude the context it needs in every future session. The generated file covers: project purpose, tech stack, directory layout, how to build/test/run, key conventions, and important files to know about. Written to the project root as CLAUDE.md. Re-running `/init` on a project that already has CLAUDE.md will refresh and expand it. The file is intended to be committed and kept up-to-date as the project evolves.",
+    "use_when": [
+      "Starting work on a new or unfamiliar codebase that has no CLAUDE.md",
+      "The existing CLAUDE.md is outdated and needs refreshing",
+      "Setting up a project so future Claude sessions have full context immediately",
+      "Onboarding collaborators who will use Claude Code on this repository"
+    ],
+    "not_for": [
+      "Projects where CLAUDE.md already exists and is up to date",
+      "Single-file scripts with no project structure to document",
+      "Generating user-facing README or documentation (different purpose)"
+    ],
+    "combos": [],
+    "overlaps_with": [],
     "usage": "rarely",
     "source": "built-in def"
+  },
+  {
+    "name": "loop",
+    "category": "builtin",
+    "tagline": "Run a prompt or slash command on a recurring interval, or self-paced",
+    "triggers": [
+      "/loop",
+      "run this every N minutes",
+      "keep running /foo on a schedule",
+      "poll for status repeatedly"
+    ],
+    "deep_dive": "Runs a given prompt or slash command on a repeating interval specified as the first argument (e.g., `/loop 5m /foo`). If no interval is given, the model self-paces based on task completion. Loop runs within the current session — it is not a persistent background job. Each iteration executes the inner command fresh and reports results. Useful for monitoring, polling, or repeatedly applying a transformation until a condition is met. To stop, the user interrupts the session.",
+    "use_when": [
+      "Polling a build, deploy, or external service status every N minutes",
+      "Repeatedly applying a transformation until a condition is met",
+      "Running a slash command on a schedule within the current session",
+      "Monitoring a process and reporting changes over time"
+    ],
+    "not_for": [
+      "Persistent background jobs that should survive session end (use schedule instead)",
+      "One-off tasks that don't need repetition",
+      "Scheduled cloud agent routines (use schedule for that)"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "schedule (loop runs within the current session; schedule creates persistent cloud agent routines that run even when Claude is closed)"
+    ],
+    "usage": "rarely",
+    "source": "built-in def"
+  },
+  {
+    "name": "schedule",
+    "category": "builtin",
+    "tagline": "Create, update, list, and run scheduled cloud agents on a cron schedule",
+    "triggers": [
+      "/schedule",
+      "schedule this to run every day",
+      "create a cron job for Claude Code",
+      "run this once at 3pm tomorrow"
+    ],
+    "deep_dive": "Creates and manages persistent cloud agent routines (cron jobs) that execute on a schedule even when the Claude Code session is closed. Supports standard cron syntax for recurring schedules and ISO timestamps for one-time runs. Each routine is a self-contained agent with its own prompt, tools, and environment. List shows all active routines; delete removes one; run triggers an immediate execution outside the schedule. Routines are stored in Anthropic's cloud infrastructure and execute remotely — they are not local processes.",
+    "use_when": [
+      "Scheduling a recurring cloud agent (daily report, weekly cleanup, nightly sync)",
+      "Running a task once at a specific future time (remind me at 3pm, run after deploy)",
+      "Managing existing scheduled routines (list, update, delete, trigger)",
+      "Automating tasks that should run without an active Claude session"
+    ],
+    "not_for": [
+      "In-session polling or repetition (use loop instead)",
+      "Local process management (schedule runs cloud agents, not local scripts)",
+      "Tasks that need to run in the current session context"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "loop (schedule for persistent cloud routines; loop for in-session repeated execution)",
+      "update-config (update-config for hooks triggered by Claude Code events; schedule for time-based cloud agents)"
+    ],
+    "usage": "never-yet",
+    "source": "built-in def"
+  },
+  {
+    "name": "update-config",
+    "category": "builtin",
+    "tagline": "Configure Claude Code via settings.json: hooks, permissions, env vars, and automated behaviors",
+    "triggers": [
+      "from now on when X, do Y",
+      "allow this command without prompting",
+      "add a permission for X",
+      "set an environment variable for this project"
+    ],
+    "deep_dive": "Modifies `settings.json` (or `settings.local.json`) to configure the Claude Code harness. The key use case is hooks: automated behaviors triggered by harness events (e.g., 'after Claude stops, run X', 'before a tool call, check Y') — these must be in settings.json because the harness executes them, not Claude. Also handles permissions (adding commands to the allowlist so they run without a prompt), environment variables, and any other harness configuration. For theme/model changes, it suggests `/config` instead as the simpler path.",
+    "use_when": [
+      "Setting up automated behaviors that run on harness events (hooks)",
+      "Adding permissions so a command runs without a confirmation prompt",
+      "Setting project-level environment variables for Claude Code",
+      "Configuring MCP servers or tool availability for a project"
+    ],
+    "not_for": [
+      "Memory or preferences that Claude can store (those don't need settings.json)",
+      "One-off tasks — hooks are for recurring automated behaviors",
+      "Theme or model changes (use /config for those)"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "schedule (update-config for event-triggered hooks; schedule for time-based cloud agent routines)",
+      "keybindings-help (update-config for tool/permission/hook config; keybindings-help for keyboard shortcut bindings)"
+    ],
+    "usage": "sometimes",
+    "source": "built-in def"
+  },
+  {
+    "name": "keybindings-help",
+    "category": "builtin",
+    "tagline": "Customize keyboard shortcuts and chords in ~/.claude/keybindings.json",
+    "triggers": [
+      "rebind a key in Claude Code",
+      "add a keyboard shortcut",
+      "customize keybindings",
+      "change the submit key"
+    ],
+    "deep_dive": "Reads and modifies `~/.claude/keybindings.json` to add, change, or remove keyboard shortcuts in Claude Code. Supports simple single-key bindings and multi-step chord bindings. Explains the keybinding schema (key, command, when conditions) and common pitfalls (conflicts with terminal defaults, OS-level shortcuts that intercept before Claude Code). After editing, explains how to reload the configuration. Covers common requests: rebinding submit from Enter to Ctrl+Enter, adding a chord for a slash command, swapping escape behavior.",
+    "use_when": [
+      "Changing which key submits a message in Claude Code",
+      "Adding a chord shortcut to quickly invoke a slash command",
+      "Resolving a keyboard shortcut conflict with the terminal or OS",
+      "Exploring what keyboard bindings are available in Claude Code"
+    ],
+    "not_for": [
+      "IDE keybindings outside of Claude Code (VS Code, JetBrains, etc.)",
+      "Harness-level configuration like permissions or hooks (use update-config instead)",
+      "Changing Claude's behavior beyond key bindings"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "update-config (keybindings-help for keyboard shortcuts; update-config for hooks, permissions, env vars)"
+    ],
+    "usage": "rarely",
+    "source": "built-in def"
+  },
+  {
+    "name": "fewer-permission-prompts",
+    "category": "builtin",
+    "tagline": "Scan transcripts for common read-only tool calls and allowlist them to cut permission prompts",
+    "triggers": [
+      "I keep getting permission prompts for the same commands",
+      "allowlist common read-only tools",
+      "reduce permission prompts",
+      "add safe commands to the allowlist automatically"
+    ],
+    "deep_dive": "Scans recent Claude Code transcripts to identify Bash and MCP tool calls that appear repeatedly and are clearly read-only (e.g., `git status`, `ls`, `cat`, read-only MCP tools). Groups them by frequency and risk level, then proposes a prioritized allowlist to add to `.claude/settings.json` under the project permissions section. Shows the user exactly what will be added and why before writing. Focuses on high-frequency, low-risk calls to maximize prompt reduction while keeping safety guards in place for write operations.",
+    "use_when": [
+      "Tired of approving the same read-only Bash commands repeatedly",
+      "Setting up a new project and want to pre-allowlist safe operations",
+      "After a few sessions to identify which commands appear most often",
+      "Balancing security with workflow friction"
+    ],
+    "not_for": [
+      "Allowlisting write operations (those should stay gated)",
+      "Fixing permission issues beyond allowlisting (use update-config for full settings control)",
+      "Projects where all prompts are intentional"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "update-config (fewer-permission-prompts auto-discovers what to allowlist; update-config applies manual configuration changes)"
+    ],
+    "usage": "rarely",
+    "source": "built-in def"
+  },
+  {
+    "name": "claude-api",
+    "category": "builtin",
+    "tagline": "Reference for the Claude API and Anthropic SDK: models, pricing, params, streaming, tool use, caching",
+    "triggers": [
+      "any mention of Claude, Anthropic, or claude-* model IDs",
+      "questions about Claude API pricing, limits, or parameters",
+      "implementing tool use, MCP, streaming, or caching with the Anthropic SDK",
+      "choosing between Claude model tiers or migrating to a new model"
+    ],
+    "deep_dive": "This skill must be read before working with any Claude or Anthropic API surface — never answer from memory, as model IDs, pricing, and parameters change frequently. It covers: current model IDs and aliases (claude-opus-4, claude-sonnet-4-5, claude-haiku-3-5, etc.), pricing per million tokens, context window sizes, API parameters (max_tokens, temperature, top_p, top_k, stop_sequences), streaming (SSE and message stream helpers), tool use (function calling, tool_choice, parallel tool calls), MCP server configuration, prompt caching (cache_control breakpoints, TTL, savings calculation), token counting, computer use, and model migration paths. Also covers the Anthropic SDK for Python and TypeScript, multi-agent patterns, and the claude.ai API differences.",
+    "use_when": [
+      "Choosing which Claude model to use for a given task and budget",
+      "Implementing tool use, streaming, or caching with the Anthropic SDK",
+      "Debugging API errors, refusals, or unexpected token counts",
+      "Migrating from one Claude model version to a newer one"
+    ],
+    "not_for": [
+      "OpenAI, Gemini, Llama, or other provider APIs (use their own docs)",
+      "Claude Code CLI configuration (use update-config or /config instead)",
+      "General LLM concepts not specific to the Anthropic API"
+    ],
+    "combos": [],
+    "overlaps_with": [
+      "context7 (claude-api for Anthropic-specific SDK docs; context7 for any other library/framework docs)"
+    ],
+    "usage": "sometimes",
+    "source": "built-in def"
+  },
+  {
+    "name": "Todoist",
+    "category": "mcp",
+    "tagline": "Manage Todoist tasks, projects, sections, comments, assignments, and productivity stats via MCP",
+    "triggers": [
+      "add a task to Todoist",
+      "create or update a Todoist project",
+      "complete a task in Todoist",
+      "get my Todoist productivity stats or overview"
+    ],
+    "deep_dive": "Provides full Todoist API access via MCP tools covering the complete task lifecycle: add-tasks (with priority, due dates, durations, descriptions), update-tasks (modify metadata), complete-tasks, reschedule-tasks (preserves recurrence patterns — use instead of update for date changes), and uncomplete-tasks. Project management tools: add-projects, update-projects, find-projects, project-management (bulk moves), project-move. Sections: add-sections, update-sections, find-sections. Comments: add-comments, update-comments, find-comments. Analytics: get-overview, get-productivity-stats, get-workspace-insights, analyze-project-health. Goals via add-goals, complete-goals, link-goal-tasks. Assignments via manage-assignments. Also supports labels, filters, reminders, and a general search tool.",
+    "use_when": [
+      "Creating, updating, or completing tasks with rich metadata (priority, due date, duration)",
+      "Organizing work into Todoist projects and sections",
+      "Getting a productivity overview or workspace insights",
+      "Managing team task assignments in a shared Todoist workspace"
+    ],
+    "not_for": [
+      "Local Markdown-file task boards (use kanban-ai for that)",
+      "Google Calendar event scheduling (use Google Calendar MCP instead)",
+      "Tasks that should not be tracked in an external cloud service"
+    ],
+    "combos": ["Todoist → Google Calendar"],
+    "overlaps_with": [
+      "kanban-ai (Todoist is cloud-based with mobile apps; kanban-ai is local Markdown files — pick by where you want data to live)"
+    ],
+    "usage": "often",
+    "source": "MCP def"
+  },
+  {
+    "name": "Gmail",
+    "category": "mcp",
+    "tagline": "Search threads, read email, create drafts, and manage labels via Gmail MCP",
+    "triggers": [
+      "search my Gmail",
+      "read an email thread",
+      "create a draft email",
+      "label or unlabel a Gmail message"
+    ],
+    "deep_dive": "Gmail MCP tools: search_threads (Gmail query syntax: from:, to:, subject:, has:attachment, after:, before:), get_thread (full thread with all messages and metadata), create_draft (compose new email with to/cc/bcc/subject/body), list_drafts (see existing drafts), list_labels and create_label (manage label taxonomy), label_message and unlabel_message (apply/remove labels on individual messages), label_thread and unlabel_thread (apply/remove across a whole thread), update_label (rename or change label color), delete_label. Authentication is handled by the MCP server configuration. Read-only operations (search, get, list) are always safe; write operations (create_draft, label) modify Gmail state.",
+    "use_when": [
+      "Searching for specific emails by sender, subject, or date range",
+      "Reading the full content of an email thread",
+      "Drafting a new email to be reviewed before sending",
+      "Organizing inbox by applying or managing labels"
+    ],
+    "not_for": [
+      "Sending email directly without a draft review step (always create_draft first)",
+      "Google Chat messages (use google-chat skill instead)",
+      "Calendar invites and event scheduling (use Google Calendar MCP)"
+    ],
+    "combos": ["Gmail → Todoist"],
+    "overlaps_with": [
+      "google-chat (Gmail for email; google-chat for real-time team messaging — different Google communication channels)"
+    ],
+    "usage": "sometimes",
+    "source": "MCP def"
+  },
+  {
+    "name": "Google Calendar",
+    "category": "mcp",
+    "tagline": "List, create, update, and delete calendar events; suggest meeting times; respond to invites",
+    "triggers": [
+      "check my calendar",
+      "create a calendar event",
+      "find a free time slot for a meeting",
+      "respond to a calendar invite"
+    ],
+    "deep_dive": "Google Calendar MCP tools: list_calendars (see all calendars in the account), list_events (fetch events by calendar, date range, and query), get_event (full event details including attendees, recurrence, and conferencing), create_event (new event with title, time, attendees, location, description, conferencing), update_event (modify existing event fields), delete_event (remove an event), respond_to_event (accept/decline/maybe for an invite), suggest_time (find available slots across multiple attendees' calendars using freebusy query). All times are in ISO 8601 format; timezone handling is explicit per event.",
+    "use_when": [
+      "Checking upcoming events or finding a specific meeting on the calendar",
+      "Creating a new meeting and inviting attendees",
+      "Finding a free time slot that works for multiple people",
+      "Accepting or declining a calendar invite"
+    ],
+    "not_for": [
+      "Todoist task management (use Todoist MCP for tasks without calendar events)",
+      "Email communication about the meeting (use Gmail MCP for that)",
+      "Project management beyond scheduling (use Todoist for structured task tracking)"
+    ],
+    "combos": ["Todoist → Google Calendar"],
+    "overlaps_with": [
+      "Todoist (Google Calendar for time-blocking and meetings; Todoist for task management and to-do lists — often used together)"
+    ],
+    "usage": "sometimes",
+    "source": "MCP def"
+  },
+  {
+    "name": "Google Drive",
+    "category": "mcp",
+    "tagline": "Search, read, create, copy, and inspect file permissions in Google Drive via MCP",
+    "triggers": [
+      "search for a file in Google Drive",
+      "read the content of a Drive file",
+      "create a new file in Google Drive",
+      "get the sharing permissions for a Drive file"
+    ],
+    "deep_dive": "Google Drive MCP tools: search_files (query by name, type, or Drive query syntax), list_recent_files (recently viewed or modified files), get_file_metadata (name, type, owner, created/modified dates, size, sharing status), read_file_content (text content of Docs, Sheets as CSV, plain text files), download_file_content (binary download for non-text files), create_file (new file with specified content and MIME type), copy_file (duplicate a file to a new name/location), get_file_permissions (list who has access and at what level). For editing Google Docs or Sheets content use the google-docs or google-sheets skills instead — Drive MCP is for file management.",
+    "use_when": [
+      "Finding a file in Drive by name or type when you don't have the URL",
+      "Reading the text content of a Google Doc or Sheet without editing it",
+      "Creating a new file or copying an existing one",
+      "Checking who has access to a shared Drive file"
+    ],
+    "not_for": [
+      "Editing Google Doc or Sheet content (use google-docs or google-sheets skills)",
+      "Local file operations (Drive MCP is for Google Drive only)",
+      "Uploading local files to Drive (not supported by current MCP tools)"
+    ],
+    "combos": ["Google Drive → google-docs", "Google Drive → google-sheets"],
+    "overlaps_with": [
+      "google-docs (Google Drive for file management and search; google-docs for reading/editing document content)",
+      "google-sheets (Google Drive for file metadata; google-sheets for reading/writing cell data)"
+    ],
+    "usage": "sometimes",
+    "source": "MCP def"
+  },
+  {
+    "name": "Vercel",
+    "category": "mcp",
+    "tagline": "Deploy projects, inspect deployments and logs, check domains, and search Vercel docs via MCP",
+    "triggers": [
+      "deploy to Vercel",
+      "check a Vercel deployment status",
+      "get runtime or build logs from Vercel",
+      "check if a domain is available on Vercel"
+    ],
+    "deep_dive": "Vercel MCP tools: deploy_to_vercel (trigger a new deployment for a connected project), list_deployments and get_deployment (browse deployment history and status), get_deployment_build_logs and get_runtime_logs (fetch logs for debugging failed builds or runtime errors), list_projects and get_project (inspect project configuration), list_teams (see Vercel teams), check_domain_availability_and_price (look up a domain's availability and cost), search_vercel_documentation (search Vercel docs for configuration options), web_fetch_vercel_url (fetch content from a Vercel-hosted URL), get_access_to_vercel_url (check access to a URL). Toolbar tools (add_toolbar_reaction, list_toolbar_threads, reply_to_toolbar_thread, etc.) manage visual feedback comments on deployed previews.",
+    "use_when": [
+      "Triggering a deployment and monitoring its build logs",
+      "Debugging a failed Vercel build or runtime error",
+      "Checking deployment history or the status of a recent deploy",
+      "Looking up domain availability for a new project"
+    ],
+    "not_for": [
+      "Local development server (use run skill instead)",
+      "Non-Vercel hosting platforms (AWS, GCP, Netlify — use their own CLIs)",
+      "Database or backend service management (Vercel MCP focuses on deployments and logs)"
+    ],
+    "combos": ["frontend-design → run → Vercel"],
+    "overlaps_with": [],
+    "usage": "rarely",
+    "source": "MCP def"
+  },
+  {
+    "name": "Lokalise",
+    "category": "mcp",
+    "tagline": "Localization platform MCP: authenticate and manage translation keys and locales",
+    "triggers": [
+      "connect to Lokalise",
+      "manage translation keys",
+      "localize the app via Lokalise",
+      "authenticate with Lokalise"
+    ],
+    "deep_dive": "Lokalise MCP provides integration with the Lokalise localization platform. The current authentication flow uses authenticate (initiates OAuth or API key auth) and complete_authentication (finalizes the token exchange). Once authenticated, the MCP server exposes tools for managing translation keys, locales, and projects within Lokalise. Use cases include pulling translation strings for a new locale, pushing updated keys from a codebase, and reviewing translation progress. The exact tool set depends on the Lokalise MCP version configured.",
+    "use_when": [
+      "Connecting to Lokalise to manage app translations",
+      "Pulling or pushing translation keys between the codebase and Lokalise",
+      "Reviewing translation completeness for a new locale",
+      "Automating i18n workflows via the Lokalise API"
+    ],
+    "not_for": [
+      "Translation without a Lokalise account",
+      "Static string extraction from code (use a local i18n tool for that first)",
+      "Non-Lokalise localization platforms"
+    ],
+    "combos": [],
+    "overlaps_with": [],
+    "usage": "never-yet",
+    "source": "MCP def"
+  },
+  {
+    "name": "context7",
+    "category": "mcp",
+    "tagline": "Fetch current library, framework, SDK, and API documentation on demand via MCP",
+    "triggers": [
+      "questions about how to use a specific library or framework",
+      "API syntax, configuration, or migration for any SDK or CLI tool",
+      "library-specific debugging or setup instructions",
+      "any question about React, Next.js, Prisma, Tailwind, Django, or similar"
+    ],
+    "deep_dive": "Context7 MCP provides two tools: resolve-library-id (maps a library name like 'nextjs' or 'prisma' to a context7 library ID) and query-docs (fetches current documentation for a resolved library ID, with an optional topic filter like 'authentication' or 'migrations'). Always use resolve-library-id first, then query-docs. Preferred over web search for library docs because it fetches structured, up-to-date documentation rather than blog posts or outdated Stack Overflow answers. Covers thousands of libraries including React, Vue, Next.js, Nuxt, SvelteKit, Remix, Express, Fastify, Prisma, Drizzle, Tailwind, shadcn/ui, Django, FastAPI, and many more.",
+    "use_when": [
+      "Looking up current API syntax for a library or framework",
+      "Debugging a library-specific error with the correct version's docs",
+      "Migrating between major versions of a library",
+      "Setting up a new tool and needing its current configuration docs"
+    ],
+    "not_for": [
+      "General web research on non-library topics (use deep-research instead)",
+      "Academic papers (use paper-search instead)",
+      "Libraries not in the context7 index (fall back to web search)"
+    ],
+    "combos": ["context7 → brainstorming", "context7 → writing-plans"],
+    "overlaps_with": [
+      "deep-research (context7 for library/SDK docs specifically; deep-research for broad multi-source web research)",
+      "paper-search (context7 for library docs; paper-search for academic literature)",
+      "claude-api (context7 for third-party libraries; claude-api for the Anthropic/Claude API specifically)"
+    ],
+    "usage": "often",
+    "source": "MCP def"
+  },
+  {
+    "name": "Playwright",
+    "category": "mcp",
+    "tagline": "Browser automation MCP: navigate, click, fill forms, screenshot, evaluate JS, inspect network",
+    "triggers": [
+      "navigate to a URL in a browser",
+      "click a button or fill a form on a web page",
+      "take a screenshot of a website",
+      "inspect console messages or network requests"
+    ],
+    "deep_dive": "Playwright MCP provides a rich set of browser automation tools: browser_navigate (go to URL), browser_click (click an element by selector or accessibility tree ref), browser_type (type text into a field), browser_fill_form (fill multiple fields at once), browser_select_option (choose a dropdown value), browser_press_key (send a key press), browser_drag and browser_drop (drag-and-drop), browser_hover (hover over element), browser_snapshot (capture accessibility tree for selector discovery), browser_take_screenshot (full page or element screenshot), browser_evaluate (run arbitrary JS in page context), browser_network_request (make a fetch/XHR from the page), browser_network_requests (inspect intercepted network traffic), browser_console_messages (read console output), browser_wait_for (wait for selector or condition), browser_handle_dialog (accept/dismiss alerts), browser_tabs (manage multiple tabs), browser_file_upload (upload a file), browser_navigate_back, browser_resize. Uses Chromium by default.",
+    "use_when": [
+      "Automating browser interactions on any public or local URL",
+      "Taking screenshots of web pages for review or testing",
+      "Filling out web forms or clicking through multi-step flows",
+      "Inspecting JavaScript console output or network requests on a page"
+    ],
+    "not_for": [
+      "Local app testing with a managed server lifecycle (use webapp-testing skill instead)",
+      "API calls that don't need a browser (use direct HTTP tools)",
+      "PDF generation from HTML (use the pdf skill instead)"
+    ],
+    "combos": ["frontend-design → Playwright", "Playwright → webapp-testing"],
+    "overlaps_with": [
+      "webapp-testing (Playwright MCP for ad-hoc browser control; webapp-testing for scripted local app testing with server lifecycle management)"
+    ],
+    "usage": "sometimes",
+    "source": "MCP def"
   }
 ]

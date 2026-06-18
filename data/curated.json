@@ -1,13 +1,52 @@
 {
   "golden_paths": [
-    "brainstorming → writing-plans → TDD → code-review",
-    "systematic-debugging → test-driven-development",
-    "graphify → deep-research"
+    "brainstorming → writing-plans → subagent-driven-development → code-review",
+    "systematic-debugging → test-driven-development → verification-before-completion",
+    "graphify → deep-research → avoid-ai-writing",
+    "grill-me → brainstorming → writing-plans → test-driven-development",
+    "skill-creator → skill-check → writing-skills",
+    "frontend-design → webapp-testing → verify → Vercel"
   ],
   "decision_groups": [
-    {"situation": "Work with a document file", "skills": ["pdf", "docx", "pptx", "xlsx"]},
-    {"situation": "Query a database", "skills": ["postgres", "mysql", "mssql", "google-sheets"]},
-    {"situation": "Review or improve code", "skills": ["code-review", "simplify", "security-review"]},
-    {"situation": "Research a topic", "skills": ["deep-research", "paper-search", "context7"]}
+    {
+      "situation": "Work with a document file",
+      "skills": ["pdf", "docx", "pptx", "xlsx", "csv-summarizer"]
+    },
+    {
+      "situation": "Query a database",
+      "skills": ["postgres", "mysql", "mssql", "google-sheets"]
+    },
+    {
+      "situation": "Review or improve code quality",
+      "skills": ["code-review", "simplify", "review", "security-review", "verify"]
+    },
+    {
+      "situation": "Research a topic",
+      "skills": ["deep-research", "paper-search", "context7"]
+    },
+    {
+      "situation": "Google Workspace",
+      "skills": ["google-docs", "google-sheets", "google-slides", "google-chat", "Gmail", "Google Calendar", "Google Drive"]
+    },
+    {
+      "situation": "Plan and build a new feature",
+      "skills": ["brainstorming", "writing-plans", "subagent-driven-development", "test-driven-development"]
+    },
+    {
+      "situation": "Debug a bug or test failure",
+      "skills": ["systematic-debugging", "debugging-code", "verify"]
+    },
+    {
+      "situation": "Automate or schedule recurring tasks",
+      "skills": ["loop", "schedule", "update-config"]
+    },
+    {
+      "situation": "Author or validate skills",
+      "skills": ["skill-creator", "skill-check", "writing-skills"]
+    },
+    {
+      "situation": "Build or test a web frontend",
+      "skills": ["web-artifacts-builder", "frontend-design", "webapp-testing", "Playwright"]
+    }
   ]
 }
