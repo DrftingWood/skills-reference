@@ -1,0 +1,28 @@
+[
+  {
+    "name": "graphify",
+    "category": "personal",
+    "tagline": "Any input → knowledge graph",
+    "triggers": ["/graphify"],
+    "deep_dive": "Ingests input, builds nodes/edges, runs community detection, emits HTML+JSON+audit.",
+    "use_when": ["exploring an unfamiliar codebase"],
+    "not_for": ["quick single-file lookups"],
+    "combos": ["graphify → deep-research"],
+    "overlaps_with": ["paper-search (both ingest docs, different output)"],
+    "usage": "sometimes",
+    "source": "C:/Users/achar/.claude/skills/graphify/SKILL.md"
+  },
+  {
+    "name": "deep-research",
+    "category": "builtin",
+    "tagline": "Fan-out web research with cited report",
+    "triggers": ["/deep-research", "ask for a researched report"],
+    "deep_dive": "Fans out web searches, fetches sources, adversarially verifies claims, synthesizes a cited report.",
+    "use_when": ["multi-source fact-checked research"],
+    "not_for": ["library API docs (use context7)"],
+    "combos": ["graphify → deep-research"],
+    "overlaps_with": ["paper-search (academic only), context7 (library docs)"],
+    "usage": "rarely",
+    "source": "built-in def"
+  }
+]
