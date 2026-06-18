@@ -6,6 +6,7 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 import build  # noqa: E402
+import templates  # noqa: E402
 
 
 def _entry(**over):
@@ -124,6 +125,50 @@ class TestEfficiencyPages(unittest.TestCase):
         self.assertIn("alpha", page)
         self.assertIn("beta (different)", page)
         self.assertNotIn(">lonely<", page)
+
+
+class TestDecisionGuide(unittest.TestCase):
+    def test_links_known_skill(self):
+        curated = {"golden_paths": [], "decision_groups": [
+            {"situation": "Do X", "skills": ["alpha"]}]}
+        page = build.render_decision_guide([_entry(name="alpha", category="personal")], curated)
+        self.assertIn('href="personal.html#alpha"', page)
+        self.assertIn("Do X", page)
+
+    def test_unknown_skill_not_linked(self):
+        curated = {"golden_paths": [], "decision_groups": [
+            {"situation": "Do X", "skills": ["ghost"]}]}
+        page = build.render_decision_guide([_entry(name="alpha")], curated)
+        self.assertNotIn('href="', page.split("ghost")[0].rsplit("<li", 1)[-1])
+
+
+class TestBuildAndVerify(unittest.TestCase):
+    def _root(self, d):
+        root = pathlib.Path(d)
+        (root / "data").mkdir()
+        (root / "assets").mkdir()
+        (root / "data" / "skills.json").write_text(
+            json.dumps([_entry(name="alpha", category="personal")]), encoding="utf-8")
+        (root / "data" / "curated.json").write_text(
+            json.dumps({"golden_paths": [], "decision_groups": []}), encoding="utf-8")
+        (root / "assets" / "style.css").write_text("body{}", encoding="utf-8")
+        return root
+
+    def test_build_writes_all_pages(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = self._root(d)
+            build.build_site(root)
+            for name in ["index", "personal", "superpowers", "builtin", "mcp",
+                         "decision-guide", "cheatsheet", "combos", "overlap"]:
+                self.assertTrue((root / "site" / f"{name}.html").exists(), name)
+            self.assertTrue((root / "site" / "assets" / "style.css").exists())
+
+    def test_verify_clean_on_good_data(self):
+        with tempfile.TemporaryDirectory() as d:
+            root = self._root(d)
+            skills = build.load_skills(root / "data" / "skills.json")
+            build.build_site(root)
+            self.assertEqual(build.verify_site(root, skills), [])
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 import html
 import json
 import pathlib
+import shutil
 
 import templates
 
@@ -167,3 +168,88 @@ def render_overlap(skills):
         blocks.append(f'<div class="overlap"><h3>{html.escape(s["name"])}</h3><ul>{items}</ul></div>')
     body = '<p>Skills that look similar — when to pick which.</p>' + "".join(blocks)
     return templates.page_shell("Overlap Map", body, render_nav("overlap.html"))
+
+
+PAGES_REQUIRING_CATEGORY = {c: f"{c}.html" for c in CATEGORIES}
+
+
+def render_decision_guide(skills, curated):
+    by_name = {s["name"]: s for s in skills}
+    blocks = []
+    for grp in curated.get("decision_groups", []):
+        items = []
+        for nm in grp["skills"]:
+            if nm in by_name:
+                cat = by_name[nm]["category"]
+                items.append(f'<li><a href="{cat}.html#{slugify(nm)}">{html.escape(nm)}</a></li>')
+            else:
+                items.append(f"<li>{html.escape(nm)}</li>")
+        blocks.append(f'<div class="dg"><h3>{html.escape(grp["situation"])}</h3>'
+                      f'<ul>{"".join(items)}</ul></div>')
+    body = '<p>Pick the right skill for the situation.</p>' + "".join(blocks)
+    return templates.page_shell("Decision Guide", body, render_nav("decision-guide.html"))
+
+
+def build_site(root):
+    root = pathlib.Path(root)
+    skills = load_skills(root / "data" / "skills.json")
+    validate(skills)
+    curated = load_curated(root / "data" / "curated.json")
+    out = root / "site"
+    (out / "assets").mkdir(parents=True, exist_ok=True)
+    pages = {
+        "index.html": render_index(skills),
+        "decision-guide.html": render_decision_guide(skills, curated),
+        "cheatsheet.html": render_cheatsheet(skills),
+        "combos.html": render_combos(skills, curated),
+        "overlap.html": render_overlap(skills),
+    }
+    for cat in CATEGORIES:
+        pages[f"{cat}.html"] = render_category_page(cat, skills)
+    written = []
+    for name, content in pages.items():
+        (out / name).write_text(content, encoding="utf-8")
+        written.append(str(out / name))
+    shutil.copyfile(root / "assets" / "style.css", out / "assets" / "style.css")
+    return written
+
+
+def verify_site(root, skills):
+    root = pathlib.Path(root)
+    out = root / "site"
+    problems = []
+    for s in skills:
+        page = out / f"{s['category']}.html"
+        if not page.exists():
+            problems.append(f"missing page {page.name}")
+            continue
+        if f'id="{slugify(s["name"])}"' not in page.read_text(encoding="utf-8"):
+            problems.append(f"{s['name']}: anchor missing from {page.name}")
+    index = (out / "index.html").read_text(encoding="utf-8")
+    import re
+    for href in re.findall(r'href="([^"]+\.html(?:#[^"]+)?)"', index):
+        file_part, _, anchor = href.partition("#")
+        target = out / file_part
+        if not target.exists():
+            problems.append(f"index links to missing file {file_part}")
+        elif anchor and f'id="{anchor}"' not in target.read_text(encoding="utf-8"):
+            problems.append(f"index links to missing anchor #{anchor} in {file_part}")
+    return problems
+
+
+def main():
+    root = pathlib.Path(__file__).resolve().parent
+    skills = load_skills(root / "data" / "skills.json")
+    written = build_site(root)
+    problems = verify_site(root, skills)
+    print(f"Wrote {len(written)} pages to {root / 'site'}")
+    if problems:
+        print("VERIFY FAILED:")
+        for p in problems:
+            print("  -", p)
+        raise SystemExit(1)
+    print("Verify clean.")
+
+
+if __name__ == "__main__":
+    main()
