@@ -75,7 +75,7 @@ def render_skill_card(skill):
     slug = slugify(skill["name"])
     triggers = ", ".join(html.escape(t) for t in skill["triggers"])
     return f"""<article id="{slug}" class="skill">
-<h3>{html.escape(skill['name'])} <span class="badge usage-{skill['usage']}">{html.escape(skill['usage'])}</span></h3>
+<h3>{html.escape(skill['name'])} <span class="badge usage-{html.escape(skill['usage'])}">{html.escape(skill['usage'])}</span></h3>
 <p class="tagline">{html.escape(skill['tagline'])}</p>
 <p class="triggers"><strong>Triggers:</strong> {triggers}</p>
 <div class="deep-dive">{html.escape(skill['deep_dive'])}</div>

@@ -1,7 +1,9 @@
 """Presentation strings for the skills reference site."""
+import html
 
 
 def page_shell(title, body, nav):
+    title = html.escape(title)
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
