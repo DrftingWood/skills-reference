@@ -128,3 +128,42 @@ document.querySelectorAll('.filter button').forEach(function(b){
 </script>"""
     body = f'<p class="summary">{total} skills total.</p>{controls}' + "".join(sections) + script
     return templates.page_shell("Skills Reference", body, render_nav("index.html"))
+
+
+def load_curated(path):
+    return json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
+
+
+def render_cheatsheet(skills):
+    rows = []
+    for s in sorted(skills, key=lambda x: x["name"]):
+        trig = ", ".join(html.escape(t) for t in s["triggers"]) or "—"
+        rows.append(f"<tr><td>{html.escape(s['name'])}</td><td>{trig}</td></tr>")
+    body = ('<table class="cheatsheet"><thead><tr><th>Skill</th><th>Triggers</th></tr></thead>'
+            '<tbody>' + "".join(rows) + "</tbody></table>")
+    return templates.page_shell("Trigger Cheatsheet", body, render_nav("cheatsheet.html"))
+
+
+def render_combos(skills, curated):
+    seen = []
+    for chain in curated.get("golden_paths", []):
+        if chain not in seen:
+            seen.append(chain)
+    for s in skills:
+        for chain in s["combos"]:
+            if chain not in seen:
+                seen.append(chain)
+    items = "".join(f"<li>{html.escape(c)}</li>" for c in seen)
+    body = f'<p>Workflow chains worth reusing.</p><ul class="combos">{items}</ul>'
+    return templates.page_shell("Skill Combos", body, render_nav("combos.html"))
+
+
+def render_overlap(skills):
+    blocks = []
+    for s in skills:
+        if not s["overlaps_with"]:
+            continue
+        items = "".join(f"<li>{html.escape(o)}</li>" for o in s["overlaps_with"])
+        blocks.append(f'<div class="overlap"><h3>{html.escape(s["name"])}</h3><ul>{items}</ul></div>')
+    body = '<p>Skills that look similar — when to pick which.</p>' + "".join(blocks)
+    return templates.page_shell("Overlap Map", body, render_nav("overlap.html"))

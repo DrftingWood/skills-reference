@@ -1,0 +1,13 @@
+{
+  "golden_paths": [
+    "brainstorming → writing-plans → TDD → code-review",
+    "systematic-debugging → test-driven-development",
+    "graphify → deep-research"
+  ],
+  "decision_groups": [
+    {"situation": "Work with a document file", "skills": ["pdf", "docx", "pptx", "xlsx"]},
+    {"situation": "Query a database", "skills": ["postgres", "mysql", "mssql", "google-sheets"]},
+    {"situation": "Review or improve code", "skills": ["code-review", "simplify", "security-review"]},
+    {"situation": "Research a topic", "skills": ["deep-research", "paper-search", "context7"]}
+  ]
+}

@@ -99,5 +99,32 @@ class TestIndex(unittest.TestCase):
         self.assertIn("2 skills total", page)
 
 
+class TestEfficiencyPages(unittest.TestCase):
+    def test_cheatsheet_lists_triggers(self):
+        page = build.render_cheatsheet([_entry(name="alpha", triggers=["/alpha", "do alpha"])])
+        self.assertIn("alpha", page)
+        self.assertIn("/alpha", page)
+        self.assertIn("do alpha", page)
+
+    def test_combos_includes_golden_paths_and_entry_combos(self):
+        curated = {"golden_paths": ["brainstorming → writing-plans → TDD"], "decision_groups": []}
+        page = build.render_combos([_entry(combos=["alpha → beta"])], curated)
+        self.assertIn("brainstorming → writing-plans → TDD", page)
+        self.assertIn("alpha → beta", page)
+
+    def test_combos_dedupes(self):
+        curated = {"golden_paths": [], "decision_groups": []}
+        page = build.render_combos(
+            [_entry(name="a", combos=["x → y"]), _entry(name="b", combos=["x → y"])], curated)
+        self.assertEqual(page.count("x → y"), 1)
+
+    def test_overlap_only_lists_entries_with_overlaps(self):
+        page = build.render_overlap([_entry(name="alpha", overlaps_with=["beta (different)"]),
+                                     _entry(name="lonely", overlaps_with=[])])
+        self.assertIn("alpha", page)
+        self.assertIn("beta (different)", page)
+        self.assertNotIn(">lonely<", page)
+
+
 if __name__ == "__main__":
     unittest.main()
